@@ -19,13 +19,13 @@ This project uses Semantic Versioning.
 - Added versioned Windows release packaging.
 - Added release notes and open-source release documentation.
 - Standardized project metadata as Mouser Multi-Action.
-- Set release repository metadata to monzenx/Mouser-Multi-Action.
+- Set release repository metadata to pour-soi/Mouser-Multi-Action.
 
 ### Fixed
 
 - Improved HID diversion synchronization for Mode Shift remapping.
 - Ensured Mode Shift diversion also applies when only the long-press slot is configured.
-- Replaced placeholder maintainer metadata with monzenx.
+- Replaced placeholder maintainer metadata with pour-soi.
 
 ### Known Limitations
 

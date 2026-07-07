@@ -223,7 +223,7 @@ class BackendDeviceLayoutTests(unittest.TestCase):
 
         fetch_manifest.assert_called_once_with(
             "v3.7.0",
-            repo="TomBadash/Mouser",
+            repo="pour-soi/Mouser-Multi-Action",
             highest_trusted_build=30699,
         )
         self.assertEqual(backend.updateInstallStatus, "manual_fallback")
@@ -1359,7 +1359,7 @@ class BackendLoginStartupTests(unittest.TestCase):
         self.assertFalse(backend.startAtLogin)
         self.assertEqual(
             status_messages,
-            ["Start-at-login state is inconsistent; please restart Mouser to recover."],
+            ["Start-at-login state is inconsistent; please restart Mouser Multi-Action to recover."],
         )
 
     def test_set_start_minimized_does_not_call_apply_login_startup(self):

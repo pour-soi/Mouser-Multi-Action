@@ -63,8 +63,11 @@ class UpdaterTests(unittest.TestCase):
             ),
         )
         request = mocked.call_args.args[0]
-        self.assertIn("TomBadash/Mouser", request.full_url)
-        self.assertEqual(request.get_header("User-agent"), f"Mouser/{APP_VERSION}")
+        self.assertEqual(
+            request.full_url,
+            "https://api.github.com/repos/pour-soi/Mouser-Multi-Action/releases/latest",
+        )
+        self.assertEqual(request.get_header("User-agent"), f"Mouser Multi-Action/{APP_VERSION}")
 
     def test_check_latest_release_accepts_utf8_bom_response(self):
         payload = (
@@ -194,7 +197,7 @@ class UpdaterTests(unittest.TestCase):
     def test_check_latest_release_handles_not_modified(self):
         state = UpdateCheckState(etag='"new"', last_check=1.0)
         error = urllib.error.HTTPError(
-            "https://api.github.com/repos/TomBadash/Mouser/releases/latest",
+            "https://api.github.com/repos/pour-soi/Mouser-Multi-Action/releases/latest",
             304,
             "Not Modified",
             {},
@@ -248,7 +251,7 @@ class UpdaterTests(unittest.TestCase):
 
     def test_check_latest_release_obeys_retry_after_backoff(self):
         error = urllib.error.HTTPError(
-            "https://api.github.com/repos/TomBadash/Mouser/releases/latest",
+            "https://api.github.com/repos/pour-soi/Mouser-Multi-Action/releases/latest",
             403,
             "rate limited",
             {"Retry-After": "30"},

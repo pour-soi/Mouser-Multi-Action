@@ -15,7 +15,7 @@ import urllib.request
 from core.version import APP_NAME, APP_VERSION
 
 
-DEFAULT_RELEASE_REPO = "monzenx/Mouser-Multi-Action"
+DEFAULT_RELEASE_REPO = "pour-soi/Mouser-Multi-Action"
 _GITHUB_API = "https://api.github.com/repos/{repo}/releases/latest"
 _LATEST_RELEASE_URL_ENV = "MOUSER_UPDATE_LATEST_RELEASE_URL"
 _USER_AGENT = f"{APP_NAME}/{APP_VERSION}"

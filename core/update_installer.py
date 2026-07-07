@@ -364,7 +364,7 @@ def fetch_json(url: str, *, timeout: float = 10.0):
         return json.loads(response.read().decode("utf-8-sig"))
 
 
-def manifest_url_for_release(tag: str, repo: str = "monzenx/Mouser-Multi-Action") -> str:
+def manifest_url_for_release(tag: str, repo: str = "pour-soi/Mouser-Multi-Action") -> str:
     override = os.environ.get(_UPDATE_MANIFEST_URL_ENV, "").strip()
     if override:
         return override
@@ -374,7 +374,7 @@ def manifest_url_for_release(tag: str, repo: str = "monzenx/Mouser-Multi-Action"
 def fetch_update_manifest_for_release(
     tag: str,
     *,
-    repo: str = "monzenx/Mouser-Multi-Action",
+    repo: str = "pour-soi/Mouser-Multi-Action",
     target_platform: str | None = None,
     timeout: float = 10.0,
     highest_trusted_build: int | None = None,

@@ -12,7 +12,7 @@ import sys
 APP_NAME = "Mouser Multi-Action"
 APP_EXECUTABLE_NAME = "Mouser.exe"
 ORIGINAL_PROJECT = "TomBadash/Mouser"
-CUSTOMIZED_BY = "monzenx"
+CUSTOMIZED_BY = "pour-soi"
 
 _DEFAULT_APP_VERSION = "0.1.0"
 _BUILD_INFO_FILENAME = "mouser_build_info.json"

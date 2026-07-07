@@ -1,4 +1,4 @@
-name: Bug Report
+﻿name: Bug Report
 description: Report a bug or unexpected behavior in Mouser
 title: "[Bug] "
 labels: ["bug"]
@@ -15,7 +15,7 @@ body:
       label: Mouser version
       description: >
         Which version of Mouser are you using? Check the release you downloaded
-        from the [releases page](https://github.com/TomBadash/Mouser/releases),
+        from the [releases page](https://github.com/pour-soi/Mouser-Multi-Action/releases),
         the version shown inside the app, or the exact asset filename you ran.
         If you are running from source or a self-built package, say that here too.
       placeholder: "e.g. v3.5.3, source checkout, or self-built from main"

@@ -4,7 +4,7 @@ Mouser Multi-Action is a customized open-source fork of [TomBadash/Mouser](https
 
 Repository name: `Mouser-Multi-Action`
 
-Maintainer: `monzenx`
+Maintainer: `pour-soi`
 
 Current release: v0.1.0
 
@@ -122,7 +122,7 @@ The script removes only temporary build output before packaging. It does not rem
 Publish this project as:
 
 ```text
-monzenx/Mouser-Multi-Action
+pour-soi/Mouser-Multi-Action
 ```
 
 Suggested release flow:
@@ -191,7 +191,7 @@ This project is based on:
 
 Maintainer:
 
-- `monzenx`
+- `pour-soi`
 
 ## License
 

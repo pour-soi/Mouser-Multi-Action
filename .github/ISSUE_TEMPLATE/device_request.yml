@@ -1,4 +1,4 @@
-name: Device Support Request
+﻿name: Device Support Request
 description: Request support for a Logitech mouse not yet supported by Mouser
 title: "[Device] "
 labels: ["device-request"]
@@ -10,7 +10,7 @@ body:
         single most useful thing you can provide.
 
         **Before opening this issue**, check
-        [CONTRIBUTING_DEVICES.md](https://github.com/TomBadash/Mouser/blob/master/CONTRIBUTING_DEVICES.md)
+        [CONTRIBUTING_DEVICES.md](https://github.com/pour-soi/Mouser-Multi-Action/blob/main/CONTRIBUTING_DEVICES.md)
         for the full guide on how device support works. If you are able to
         submit a PR yourself, even better!
 

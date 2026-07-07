@@ -87,7 +87,7 @@ def _print_startup_times():
 
 
 LINUX_DESKTOP_FILE_BASENAME = "io.github.tombadash.mouser"
-WINDOWS_APP_USER_MODEL_ID = "monzenx.Mouser-Multi-Action"
+WINDOWS_APP_USER_MODEL_ID = "pour-soi.Mouser-Multi-Action"
 
 
 def _parse_cli_args(argv):

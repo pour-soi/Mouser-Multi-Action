@@ -2,11 +2,11 @@
 
 Release date: 2026-07-06
 
-Repository: `monzenx/Mouser-Multi-Action`
+Repository: `pour-soi/Mouser-Multi-Action`
 
 Based on: `TomBadash/Mouser`
 
-Maintainer: `monzenx`
+Maintainer: `pour-soi`
 
 ## Summary
 
@@ -22,7 +22,7 @@ Mouser Multi-Action v0.1.0 is the first release of this customized fork of TomBa
 - Config migration for long-press mappings
 - UI for Click Action and Long Press Action
 - Versioned Windows release packaging
-- Consistent Mouser Multi-Action naming and monzenx maintainer metadata
+- Consistent Mouser Multi-Action naming and pour-soi maintainer metadata
 
 ## Bug Fixes
 
