@@ -16,6 +16,11 @@ block_cipher = None
 ROOT = os.path.abspath(".")
 PYSIDE6_DIR = os.path.dirname(PySide6.__file__)
 BUILD_INFO_PATH = os.path.join(ROOT, "build", "mouser_build_info.json")
+VERSION_INFO_PATH = os.path.join(ROOT, "build", "mouser_version_info.txt")
+APP_NAME = "Mouser Multi-Action"
+APP_EXECUTABLE_NAME = "Mouser.exe"
+APP_MAINTAINER = "pour-soi"
+ORIGINAL_PROJECT = "TomBadash/Mouser"
 
 
 def _load_app_version() -> str:
@@ -96,8 +101,64 @@ def _write_build_info(version: str) -> str:
     return BUILD_INFO_PATH
 
 
+def _version_tuple(version: str) -> tuple[int, int, int, int]:
+    parts = []
+    for item in version.split("."):
+        try:
+            parts.append(int(item))
+        except ValueError:
+            parts.append(0)
+    while len(parts) < 4:
+        parts.append(0)
+    return tuple(parts[:4])
+
+
+def _write_version_info(version: str) -> str:
+    file_version = _version_tuple(version)
+    file_version_text = ".".join(str(part) for part in file_version)
+    os.makedirs(os.path.dirname(VERSION_INFO_PATH), exist_ok=True)
+    with open(VERSION_INFO_PATH, "w", encoding="utf-8") as version_info_file:
+        version_info_file.write(
+            f"""# UTF-8
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers={file_version},
+    prodvers={file_version},
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        '040904B0',
+        [
+          StringStruct('CompanyName', '{APP_MAINTAINER}'),
+          StringStruct('FileDescription', '{APP_NAME}'),
+          StringStruct('FileVersion', '{file_version_text}'),
+          StringStruct('InternalName', 'Mouser Multi-Action'),
+          StringStruct('Maintainer', '{APP_MAINTAINER}'),
+          StringStruct('OriginalFilename', '{APP_EXECUTABLE_NAME}'),
+          StringStruct('OriginalProject', '{ORIGINAL_PROJECT}'),
+          StringStruct('ProductName', '{APP_NAME}'),
+          StringStruct('ProductVersion', '{version}'),
+        ]
+      )
+    ]),
+    VarFileInfo([VarStruct('Translation', [1033, 1200])])
+  ]
+)
+"""
+        )
+    return VERSION_INFO_PATH
+
+
 APP_VERSION = _load_app_version()
 BUILD_INFO_DATA = _write_build_info(APP_VERSION)
+VERSION_INFO_DATA = _write_version_info(APP_VERSION)
 
 a = Analysis(
     ["main_qml.py"],
@@ -260,6 +321,7 @@ exe = EXE(
     upx=False,              # UPX OFF — decompression at startup is very slow
     console=False,          # windowed app (no terminal)
     icon=os.path.join(ROOT, "images", "logo.ico"),
+    version=VERSION_INFO_DATA,
     uac_admin=False,        # does NOT require admin
 )
 
