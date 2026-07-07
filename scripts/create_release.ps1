@@ -1,0 +1,115 @@
+param(
+    [string]$Version = ""
+)
+
+$ErrorActionPreference = "Stop"
+
+$ProjectName = "Mouser Multi-Action"
+$PackageBaseName = "Mouser-Multi-Action"
+$Root = Resolve-Path (Join-Path $PSScriptRoot "..")
+$ReleaseDir = Join-Path $Root "release"
+$BuildDir = Join-Path $Root "build"
+$DistDir = Join-Path $Root "dist"
+$StageRoot = Join-Path $ReleaseDir "_stage"
+
+function Normalize-Version([string]$Value) {
+    $v = $Value.Trim()
+    if ($v.StartsWith("v")) {
+        $v = $v.Substring(1)
+    }
+    if ($v -notmatch '^\d+\.\d+\.\d+$') {
+        throw "Version must use Semantic Versioning, for example v0.1.0."
+    }
+    return $v
+}
+
+function Next-Patch-Version {
+    if (-not (Test-Path -LiteralPath $ReleaseDir)) {
+        return "0.1.0"
+    }
+
+    $versions = Get-ChildItem -LiteralPath $ReleaseDir -Filter "$PackageBaseName-v*-Windows.zip" -File |
+        ForEach-Object {
+            if ($_.Name -match "$PackageBaseName-v(\d+)\.(\d+)\.(\d+)-Windows\.zip") {
+                [pscustomobject]@{
+                    Major = [int]$Matches[1]
+                    Minor = [int]$Matches[2]
+                    Patch = [int]$Matches[3]
+                }
+            }
+        } |
+        Sort-Object Major, Minor, Patch
+
+    if (-not $versions) {
+        return "0.1.0"
+    }
+
+    $latest = $versions[-1]
+    return "$($latest.Major).$($latest.Minor).$($latest.Patch + 1)"
+}
+
+if ([string]::IsNullOrWhiteSpace($Version)) {
+    $Version = Next-Patch-Version
+} else {
+    $Version = Normalize-Version $Version
+}
+
+$VersionTag = "v$Version"
+$PackageName = "$PackageBaseName-$VersionTag"
+$ZipPath = Join-Path $ReleaseDir "$PackageName-Windows.zip"
+$VersionedReleaseNotes = Join-Path $ReleaseDir "RELEASE_NOTES-$VersionTag.md"
+$StageDir = Join-Path $StageRoot $PackageName
+
+if (Test-Path -LiteralPath $ZipPath) {
+    throw "Release already exists: $ZipPath"
+}
+
+New-Item -ItemType Directory -Force -Path $ReleaseDir | Out-Null
+
+Write-Host "[$ProjectName] Cleaning temporary build artifacts..."
+foreach ($path in @($BuildDir, $DistDir, $StageRoot)) {
+    if (Test-Path -LiteralPath $path) {
+        Remove-Item -LiteralPath $path -Recurse -Force
+    }
+}
+
+Write-Host "[$ProjectName] Building $VersionTag..."
+$env:MOUSER_VERSION = $Version
+try {
+    & (Join-Path $Root ".venv\Scripts\python.exe") -m PyInstaller (Join-Path $Root "Mouser.spec") --noconfirm
+    if ($LASTEXITCODE -ne 0) {
+        throw "PyInstaller failed with exit code $LASTEXITCODE"
+    }
+} finally {
+    Remove-Item Env:\MOUSER_VERSION -ErrorAction SilentlyContinue
+}
+
+$BuiltApp = Join-Path $DistDir "Mouser"
+if (-not (Test-Path -LiteralPath (Join-Path $BuiltApp "Mouser.exe"))) {
+    throw "Build output is missing Mouser.exe: $BuiltApp"
+}
+
+Write-Host "[$ProjectName] Staging release..."
+New-Item -ItemType Directory -Force -Path $StageDir | Out-Null
+Copy-Item -Path (Join-Path $BuiltApp "*") -Destination $StageDir -Recurse -Force
+
+foreach ($doc in @("LICENSE", "README.md", "CHANGELOG.md", "RELEASE_NOTES.md")) {
+    $src = Join-Path $Root $doc
+    if (-not (Test-Path -LiteralPath $src)) {
+        throw "Missing release document: $doc"
+    }
+    Copy-Item -LiteralPath $src -Destination (Join-Path $StageDir $doc) -Force
+}
+
+Copy-Item -LiteralPath (Join-Path $Root "RELEASE_NOTES.md") -Destination $VersionedReleaseNotes -Force
+Copy-Item -LiteralPath (Join-Path $Root "CHANGELOG.md") -Destination (Join-Path $ReleaseDir "CHANGELOG.md") -Force
+
+Write-Host "[$ProjectName] Creating $ZipPath..."
+Compress-Archive -LiteralPath $StageDir -DestinationPath $ZipPath -CompressionLevel Optimal
+
+Remove-Item -LiteralPath $StageRoot -Recurse -Force
+
+Write-Host "[$ProjectName] Release complete:"
+Write-Host "  $ZipPath"
+Write-Host "  $VersionedReleaseNotes"
+Write-Host "  $(Join-Path $ReleaseDir 'CHANGELOG.md')"
