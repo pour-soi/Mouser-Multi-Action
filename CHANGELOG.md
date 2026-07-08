@@ -6,6 +6,12 @@ This project uses Semantic Versioning.
 
 ## Unreleased
 
+### Documentation
+
+- Polished the README for the first official PourInput release.
+- Added clearer screenshots, supported devices, roadmap, and credits sections.
+- Replaced the corrupted Chinese README text with a readable PourInput overview.
+
 ## v1.0.0 - 2026-07-08
 
 ### Added

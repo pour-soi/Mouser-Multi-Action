@@ -29,6 +29,12 @@ This release also finalizes the PourInput application identity, Windows executab
 - Consistent PourInput naming and pour-soi maintainer metadata
 - Official `PourInput-v1.0.0-Windows.zip` release artifact
 
+## Documentation
+
+- Clearer README sections for features, installation, screenshots, supported devices, roadmap, and credits.
+- Supported-device notes now call out the currently cataloged Logitech families and the HID++ requirements behind button remapping.
+- Credits now explicitly acknowledge the original Mouser project and its contributors.
+
 ## Bug Fixes
 
 - Mode Shift HID diversion is synchronized after mapping changes.

@@ -26,33 +26,32 @@ Compared with the original Mouser project, this fork focuses on reusable multi-a
 
 ## Features
 
-- Generic Multi-Action Button framework.
-- One reusable dispatcher for supported buttons.
-- Independent Click and Long Press mappings.
-- Default Long Press threshold of 300 ms.
-- Back, Forward, and Mode Shift support in the first release.
-- Configuration migration for existing profiles.
-- UI fields for Click Action and Long Press Action.
-- HID++ diversion synchronization for Mode Shift remapping.
-- Windows release packaging with versioned release artifacts.
+- **Generic Multi-Action framework** - supported buttons can perform one action on click and a different action on long press.
+- **Independent Click / Long Press actions** - configure each supported button without changing the others.
+- **Improved Mode Shift handling** - keeps HID++ diversion synchronized when Mode Shift mappings change.
+- **Back and Forward button support** - assign browser navigation, clipboard actions, screenshots, and other available actions.
+- **Per-app profiles** - keep different mappings for different applications.
+- **Pointer, scroll, and SmartShift controls** - tune DPI, scroll direction, smooth scrolling, and scroll wheel mode where the device exposes support.
+- **Screenshot actions** - capture full screen or region to clipboard or file.
+- **Windows portable release package** - no Python install is required for release builds.
 
 ## Screenshots
 
 ### Main Interface
 
-Shows the main MX Master 3 configuration interface.
+Configure the active device, profiles, and supported button mappings from the main mouse view.
 
 ![Main Interface](assets/screenshot-main.png)
 
 ### Action Selection
 
-Shows the available actions that can be assigned to a button.
+Choose the action assigned to a supported Click or Long Press slot.
 
 ![Action Selection](assets/screenshot-actions.png)
 
 ### About
 
-Shows version, maintainer, and build information.
+Review the PourInput version, maintainer, upstream credit, build mode, commit, and launch path.
 
 ![About](assets/screenshot-about.png)
 
@@ -86,15 +85,25 @@ If no Long Press Action is configured, the button keeps the same behavior it had
 
 ## Supported Devices
 
-PourInput targets Logitech HID++ mice that the app can detect and control.
+PourInput targets Logitech HID++ mice that the app can detect and control. Support depends on what each mouse exposes through HID++ and the operating system. Some controls must be reprogrammable and divertable before PourInput can intercept them.
 
-Multi-Action support is currently enabled for:
+Currently cataloged devices include:
 
-- Mode Shift
-- Back Button
-- Forward Button
+- Logitech MX Master 4
+- Logitech MX Master 3S
+- Logitech MX Master 3
+- Logitech MX Master 2S
+- Logitech MX Master
+- Logitech MX Anywhere 3S
+- Logitech MX Anywhere 3
+- Logitech MX Anywhere 2S
+- Logitech MX Vertical
+- Logitech Signature M650 / M650 L
+- Logitech G502, G502 HERO, G502 LIGHTSPEED, and G502 X family
 
-Device support depends on what the mouse exposes through HID++. Some controls must be reprogrammable and divertable before PourInput can intercept them. If your mouse is detected but a button is missing, open a device support request and include the device info JSON from the Mouse page.
+Multi-Action support is currently focused on Mode Shift, Back, and Forward where those controls are exposed. Other buttons may still be available as standard mouse events, and device-specific capabilities such as DPI, SmartShift, battery reporting, gesture controls, and horizontal scroll vary by model.
+
+If your mouse is detected but a button is missing, open a device support request and include the device info JSON from the Mouse page.
 
 ## Building From Source
 
@@ -166,25 +175,22 @@ The release script removes only temporary build output before packaging. It pres
 
 ## Roadmap
 
-### v0.2.0
+### Current
 
-- Double Click support.
-- Custom Long Press timeout.
+- PourInput v1.0.0
+- Generic Multi-Action framework
+- Independent Click / Long Press actions
+- Improved Mode Shift handling
 
-### v0.3.0
+### Planned
 
-- Per-button timeout.
-- Export and import configuration.
-
-### v0.4.0
-
-- Macro support.
-- Sequential actions.
-
-### After v1.0.0
-
-- Broader device coverage.
-- More configurable multi-action timing.
+- Enhanced Easy-Switch
+- Additional button actions
+- More Logitech device support
+- Better device detection
+- Configuration import/export
+- macOS experimental support
+- Flow-inspired multi-device features (long-term)
 
 ## Known Issues
 
@@ -216,9 +222,11 @@ To add another Multi-Action button in the future:
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [CONTRIBUTING_DEVICES.md](CONTRIBUTING_DEVICES.md), and [DEVELOPMENT.md](DEVELOPMENT.md) for more detail.
 
-## Acknowledgements
+## Credits
 
-PourInput is based on [TomBadash/Mouser](https://github.com/TomBadash/Mouser). The original project made the foundation for this fork possible.
+PourInput is based on the original [Mouser](https://github.com/TomBadash/Mouser) project. Many thanks to the Mouser contributors for creating the foundation that made this project possible.
+
+PourInput continues development independently while respecting and acknowledging the original project.
 
 Maintainer: `pour-soi`
 

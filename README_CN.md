@@ -1,72 +1,74 @@
 # PourInput
 
-**One Button. Two Actions.**
+**一个按键，两个动作。**
 
-PourInput 是 [TomBadash/Mouser](https://github.com/TomBadash/Mouser) 的开源分支，重点加入通用的 Multi-Action Button 框架。
-
-支持的鼠标按键可以分别设置：
-
-- **Click Action**：短按动作
-- **Long Press Action**：长按动作
+PourInput 是基于 [TomBadash/Mouser](https://github.com/TomBadash/Mouser) 的开源项目，面向 Logitech HID++ 鼠标，提供通用的 Multi-Action Button 框架。
 
 当前版本：`v1.0.0`
 
 仓库：`pour-soi/PourInput`
 
-## 项目目标
-
-PourInput 让一个支持的鼠标按键承担两个独立动作。例如：
-
-- Back：短按返回，长按复制
-- Forward：短按前进，长按粘贴
-- Mode Shift：短按截图到剪贴板，长按切换滚轮模式
-
-默认长按阈值为 300 ms。
-
 ## 功能
 
-- 通用 Multi-Action Button 框架
-- 支持 Click 和 Long Press
-- 支持 Mode Shift、Back Button、Forward Button
-- 通用分发器，避免每个按键重复实现计时逻辑
-- 配置迁移
-- 新 UI 字段：Click Action 和 Long Press Action
-- Mode Shift HID++ diversion 同步
-- 版本化 Windows 发布包
+- 通用 Multi-Action 框架。
+- 支持独立的 Click Action 和 Long Press Action。
+- 改进 Mode Shift 的 HID++ diversion 同步。
+- 支持 Back、Forward、Mode Shift 的多动作映射。
+- 支持按应用配置文件。
+- 支持 DPI、滚动方向、平滑滚动和 SmartShift 等设备能力。
+- 支持截图到剪贴板或文件。
+- Windows 便携发布包，无需安装 Python。
+
+## 截图
+
+### 主界面
+
+配置当前设备、配置文件和支持的鼠标按键映射。
+
+![主界面](assets/screenshot-main.png)
+
+### 动作选择
+
+为 Click 或 Long Press 槽位选择动作。
+
+![动作选择](assets/screenshot-actions.png)
+
+### 关于
+
+显示版本、维护者、上游项目、构建模式、提交和启动路径。
+
+![关于](assets/screenshot-about.png)
 
 ## 安装
 
 1. 打开 [最新 Release 页面](https://github.com/pour-soi/PourInput/releases/latest)。
 2. 下载 `PourInput-v1.0.0-Windows.zip`。
-3. 解压 zip。
+3. 解压 zip 文件。
 4. 运行 `PourInput-v1.0.0/PourInput.exe`。
 
-如果已经运行其他 PourInput 或 PourInput 构建，请先从系统托盘退出。
-
-## 使用
-
-打开 Mouse 页面，选择支持的按键，然后分别配置：
-
-- Click Action
-- Long Press Action
-
-短于 300 ms 的按压会执行 Click Action。按住至少 300 ms 后松开会执行 Long Press Action。
-
-如果没有配置 Long Press Action，该按键会保持当前 PourInput 的默认行为。
+如果已经运行其他 PourInput 构建，请先从系统托盘退出。
 
 ## 支持设备
 
-PourInput 面向本应用可以检测和控制的 Logitech HID++ 鼠标。
+PourInput 面向应用可以检测和控制的 Logitech HID++ 鼠标。实际支持取决于设备通过 HID++ 和操作系统暴露的能力；某些按键需要支持 reprogrammable 和 divertable，PourInput 才能拦截并重新映射。
 
-Multi-Action 当前启用的按键：
+当前设备目录包括：
 
-- Mode Shift
-- Back Button
-- Forward Button
+- Logitech MX Master 4
+- Logitech MX Master 3S
+- Logitech MX Master 3
+- Logitech MX Master 2S
+- Logitech MX Master
+- Logitech MX Anywhere 3S
+- Logitech MX Anywhere 3
+- Logitech MX Anywhere 2S
+- Logitech MX Vertical
+- Logitech Signature M650 / M650 L
+- Logitech G502、G502 HERO、G502 LIGHTSPEED、G502 X 系列
 
-实际可用性取决于设备通过 HID++ 暴露的控制能力。某些按键需要是 reprogrammable 和 divertable，PourInput 才能拦截。
+Multi-Action 当前重点支持 Mode Shift、Back 和 Forward。DPI、SmartShift、电量、手势控制和水平滚动等能力会因设备而异。
 
-如果你的设备缺少按键支持，请在 GitHub issue 中附上 Mouse 页面复制出的 device info JSON。
+如果设备被检测到但缺少某个按键支持，请在 GitHub issue 中附上 Mouse 页面复制出的 device info JSON。
 
 ## 从源码运行
 
@@ -82,7 +84,7 @@ python -m venv .venv
 .\.venv\Scripts\python.exe -m unittest discover -s tests
 ```
 
-构建 Windows 包：
+构建 Windows 应用：
 
 ```powershell
 .\.venv\Scripts\python.exe -m PyInstaller PourInput.spec --noconfirm
@@ -105,39 +107,35 @@ release/
 
 ## 路线图
 
-### v0.2.0
+### 当前
 
-- Double Click support
-- Custom Long Press timeout
+- PourInput v1.0.0
+- 通用 Multi-Action 框架
+- 独立 Click / Long Press 动作
+- 改进 Mode Shift 处理
 
-### v0.3.0
+### 计划
 
-- Per-button timeout
-- Export/Import configuration
-
-### v0.4.0
-
-- Macro support
-- Sequential actions
-
-### v1.0.0
-
-- Stable release
+- 增强 Easy-Switch
+- 更多按键动作
+- 更多 Logitech 设备支持
+- 更好的设备检测
+- 配置导入 / 导出
+- macOS 实验性支持
+- 类似 Flow 的多设备功能（长期）
 
 ## 贡献
 
-欢迎提交文档改进、测试、设备信息、Bug 修复和新设备支持。
-
-添加新设备前请阅读 [CONTRIBUTING_DEVICES.md](CONTRIBUTING_DEVICES.md)。
-
-开发说明见 [DEVELOPMENT.md](DEVELOPMENT.md)。
+欢迎提交文档改进、测试、设备信息、bug 修复和新设备支持。添加新设备前请阅读 [CONTRIBUTING_DEVICES.md](CONTRIBUTING_DEVICES.md)。开发说明见 [DEVELOPMENT.md](DEVELOPMENT.md)。
 
 ## 致谢
 
-PourInput 基于 [TomBadash/Mouser](https://github.com/TomBadash/Mouser)。
+PourInput 基于原始 [Mouser](https://github.com/TomBadash/Mouser) 项目。感谢 Mouser 贡献者创建了让本项目成为可能的基础。
+
+PourInput 将继续独立开发，同时尊重并致谢原始项目。
 
 维护者：`pour-soi`
 
 ## License
 
-本项目保留原 PourInput 许可证。详见 [LICENSE](LICENSE)。
+本项目保留原始 Mouser 许可证。详见 [LICENSE](LICENSE)。
