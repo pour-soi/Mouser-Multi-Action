@@ -38,6 +38,19 @@ class LogiDeviceRegistryTests(unittest.TestCase):
         self.assertEqual(device.key, "mx_master_4")
         self.assertEqual(device.ui_layout, "mx_master_4")
 
+    def test_known_mx_master_devices_keep_mx_master_buttons_and_layouts(self):
+        expected = {
+            0xB042: "mx_master_4",
+            0xB034: "mx_master_3s",
+            0xB023: "mx_master_3",
+        }
+        for product_id, layout_key in expected.items():
+            with self.subTest(product_id=f"0x{product_id:04X}"):
+                info = build_connected_device_info(product_id=product_id)
+
+                self.assertEqual(info.ui_layout, layout_key)
+                self.assertEqual(info.supported_buttons, MX_MASTER_BUTTONS)
+
     def test_resolve_device_by_product_id(self):
         device = resolve_device(product_id=0xB034)
 
@@ -227,7 +240,8 @@ class LogiDeviceRegistryTests(unittest.TestCase):
         self.assertEqual(info.gesture_cids, (0x00F1,))
         self.assertEqual(info.ui_layout, "generic_mouse")
         self.assertEqual(info.image_asset, "icons/mouse-simple.svg")
-        self.assertEqual(info.supported_buttons, ("middle", "xbutton1", "xbutton2"))
+        self.assertEqual(info.supported_buttons, GENERIC_BUTTONS)
+        self.assertNotEqual(info.supported_buttons, MX_MASTER_BUTTONS)
 
     def test_m720_falls_back_to_generic_layout_without_device_claim(self):
         for product_id in (0xC52B, 0xB015):

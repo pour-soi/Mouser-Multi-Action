@@ -66,7 +66,7 @@ GENERIC_BUTTONS = (
 )
 
 # Backward-compat alias used by config.py and other modules.
-DEFAULT_BUTTON_LAYOUT = MX_MASTER_BUTTONS
+DEFAULT_BUTTON_LAYOUT = GENERIC_BUTTONS
 
 _GESTURE_BUTTON_KEYS = (
     "gesture",
@@ -369,10 +369,21 @@ class ConnectedDeviceInfo:
     capability_inventory: DeviceCapabilityInventory = DeviceCapabilityInventory()
 
 
+def _spec_with_family_button_defaults(spec: dict) -> dict:
+    normalized = dict(spec)
+    if (
+        "supported_buttons" not in normalized
+        and str(normalized.get("key", "")).startswith("mx_master")
+    ):
+        normalized["supported_buttons"] = MX_MASTER_BUTTONS
+    return normalized
+
+
 # Seeded from PourInput's own device catalog first, then extended with broader
 # family support for devices that still use a shared layout.
 KNOWN_LOGI_DEVICES = tuple(
-    LogiDeviceSpec(**spec) for spec in LOGI_DEVICE_SPECS
+    LogiDeviceSpec(**_spec_with_family_button_defaults(spec))
+    for spec in LOGI_DEVICE_SPECS
 ) + (
     LogiDeviceSpec(
         key="mx_vertical",
