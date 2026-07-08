@@ -26,14 +26,13 @@ Compared with the original Mouser project, this fork focuses on reusable multi-a
 
 ## Features
 
-- **Generic Multi-Action framework** - supported buttons can perform one action on click and a different action on long press.
-- **Independent Click / Long Press actions** - configure each supported button without changing the others.
-- **Improved Mode Shift handling** - keeps HID++ diversion synchronized when Mode Shift mappings change.
-- **Back and Forward button support** - assign browser navigation, clipboard actions, screenshots, and other available actions.
-- **Per-app profiles** - keep different mappings for different applications.
-- **Pointer, scroll, and SmartShift controls** - tune DPI, scroll direction, smooth scrolling, and scroll wheel mode where the device exposes support.
-- **Screenshot actions** - capture full screen or region to clipboard or file.
-- **Windows portable release package** - no Python install is required for release builds.
+- Generic **Multi-Action** framework — supported buttons can perform different actions on **Click** and **Long Press**.
+- **Extended button customization** — assign independent Click and Long Press actions to supported buttons, including **Mode Shift**, **Back**, and **Forward**.
+- Improved **Mode Shift** handling — more reliable event detection and HID++ synchronization.
+- Application-specific profiles — automatically switch button mappings for different applications.
+- Pointer, scrolling, and SmartShift controls — configure supported Logitech device features.
+- Built-in screenshot actions — capture the full screen or a selected region to the clipboard or a file.
+- Portable Windows release — no Python installation required.
 
 ## Screenshots
 
