@@ -1915,12 +1915,6 @@ class Backend(QObject):
         """Runs on Qt main thread."""
         self._append_debug_line(message)
 
-    @Slot(str)
-    def _handleStatusMessage(self, message):
-        """Runs on Qt main thread."""
-        if message:
-            self.statusMessage.emit(message)
-
     def _append_debug_line(self, message):
         timestamp = time.strftime("%H:%M:%S")
         self._debug_lines.append(f"[{timestamp}] {message}")

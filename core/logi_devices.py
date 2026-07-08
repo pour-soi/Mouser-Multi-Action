@@ -354,10 +354,10 @@ class DeviceCapabilityInventory:
 
 @dataclass(frozen=True)
 class DeviceCapabilities:
-    """High-level feature summary for future capability-based decisions.
+    """High-level feature summary used by capability-based behavior gates.
 
-    This intentionally sits alongside the existing model/button logic.  Nothing
-    consumes it for behavior yet.
+    This complements cataloged layouts: runtime HID++ evidence can narrow or
+    enable behavior while unknown devices continue to use conservative fallbacks.
     """
 
     reprogrammable_buttons: tuple[str, ...] = DEFAULT_BUTTON_LAYOUT

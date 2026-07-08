@@ -263,11 +263,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if gh release view "${{ env.RELEASE_TAG }}" --repo "${{ github.repository }}" > /dev/null 2>&1; then
-            # Release already exists — just upload the assets
-            gh release delete-asset "${{ env.RELEASE_TAG }}" \
-              "PourInput-Windows.zip" \
-              --repo "${{ github.repository }}" \
-              --yes || true
+            # Release already exists; upload or replace the assets.
             gh release upload "${{ env.RELEASE_TAG }}" \
               --repo "${{ github.repository }}" \
               --clobber \

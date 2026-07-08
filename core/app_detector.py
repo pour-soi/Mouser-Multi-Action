@@ -8,7 +8,6 @@ macOS:   NSWorkspace.sharedWorkspace().frontmostApplication().
 import os
 import sys
 import threading
-import time
 
 
 # ==================================================================
