@@ -426,7 +426,10 @@ class Engine:
         hg = self.hook._hid_gesture
         if hg:
             def _write():
-                hg.set_dpi(new_dpi)
+                if self._device_supports_adjustable_dpi(
+                    getattr(hg, "connected_device", None)
+                ):
+                    hg.set_dpi(new_dpi)
             threading.Thread(target=_write, daemon=True, name="CycleDPI").start()
 
     def _make_hscroll_handler(self, action_id):
@@ -618,7 +621,9 @@ class Engine:
             return False
 
         if saved_dpi is not None:
-            if not hasattr(hg, "set_dpi"):
+            if not self._device_supports_adjustable_dpi(hg.connected_device):
+                replay_ok = False
+            elif not hasattr(hg, "set_dpi"):
                 replay_ok = False
             elif hg.set_dpi(saved_dpi):
                 if self._dpi_read_cb:
@@ -649,7 +654,11 @@ class Engine:
             if hg is None or getattr(hg, "connected_device", None) is None:
                 return False
             if retry_dpi:
-                if not hasattr(hg, "set_dpi") or not hg.set_dpi(saved_dpi):
+                if (
+                    not self._device_supports_adjustable_dpi(hg.connected_device)
+                    or not hasattr(hg, "set_dpi")
+                    or not hg.set_dpi(saved_dpi)
+                ):
                     replay_ok = False
                 elif self._dpi_read_cb:
                     try:
@@ -795,6 +804,20 @@ class Engine:
             or bool(getattr(inventory, "has_reprog_controls", False))
         )
 
+    @staticmethod
+    def _device_supports_adjustable_dpi(device):
+        capabilities = getattr(device, "capabilities", None)
+        if capabilities is None:
+            return True
+        if not hasattr(capabilities, "adjustable_dpi"):
+            return True
+        if capabilities.adjustable_dpi:
+            return True
+        inventory = getattr(device, "capability_inventory", None)
+        if inventory is None:
+            return True
+        return not bool(getattr(inventory, "raw_features", ()))
+
     def set_battery_callback(self, cb):
         """Register ``cb(level: int)`` invoked when battery level is read (0-100)."""
         self._battery_read_cb = cb
@@ -838,6 +861,10 @@ class Engine:
         # Try via the hook's HidGestureListener
         hg = self.hook._hid_gesture
         if hg:
+            if not self._device_supports_adjustable_dpi(
+                getattr(hg, "connected_device", None)
+            ):
+                return False
             return hg.set_dpi(dpi)
         print("[Engine] No HID++ connection — DPI not applied")
         return False

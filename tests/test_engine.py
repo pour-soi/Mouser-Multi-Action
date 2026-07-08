@@ -587,6 +587,54 @@ class EngineReplayPhaseOneTests(unittest.TestCase):
             status_messages,
         )
 
+    def test_set_dpi_writes_when_capability_reports_adjustable_dpi(self):
+        engine = self._make_engine()
+        engine.hook._hid_gesture = self._make_hid(
+            connected_device=SimpleNamespace(
+                name="MX Master 3S",
+                capabilities=SimpleNamespace(adjustable_dpi=True),
+            )
+        )
+
+        with patch("core.engine.save_config"):
+            result = engine.set_dpi(1600)
+
+        self.assertTrue(result)
+        engine.hook._hid_gesture.set_dpi.assert_called_once_with(1600)
+
+    def test_set_dpi_skips_when_capability_reports_no_adjustable_dpi(self):
+        engine = self._make_engine()
+        engine.hook._hid_gesture = self._make_hid(
+            connected_device=SimpleNamespace(
+                name="Mystery Logitech Mouse",
+                capabilities=SimpleNamespace(adjustable_dpi=False),
+                capability_inventory=SimpleNamespace(
+                    raw_features=("REPROG_CONTROLS_V4",),
+                ),
+            )
+        )
+
+        with patch("core.engine.save_config"):
+            result = engine.set_dpi(1600)
+
+        self.assertFalse(result)
+        engine.hook._hid_gesture.set_dpi.assert_not_called()
+
+    def test_set_dpi_preserves_fallback_when_capability_is_unknown(self):
+        engine = self._make_engine()
+        engine.hook._hid_gesture = self._make_hid(
+            connected_device=SimpleNamespace(
+                name="Sparse Runtime Device",
+                capabilities=SimpleNamespace(adjustable_dpi=False),
+            )
+        )
+
+        with patch("core.engine.save_config"):
+            result = engine.set_dpi(1600)
+
+        self.assertTrue(result)
+        engine.hook._hid_gesture.set_dpi.assert_called_once_with(1600)
+
     def test_battery_poll_skips_smart_shift_reads_while_replay_is_inflight(self):
         engine = self._make_engine()
         stop_event = Mock()

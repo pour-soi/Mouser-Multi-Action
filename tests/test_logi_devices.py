@@ -471,6 +471,18 @@ class RuntimeSupportedButtonTests(unittest.TestCase):
                 self.assertTrue(info.capabilities.battery_status)
                 self.assertIn("mode_shift", info.supported_buttons)
 
+    def test_mx_master_devices_keep_dpi_capability_when_discovered(self):
+        for product_id in (0xB023, 0xB034, 0xB042):
+            with self.subTest(product_id=f"0x{product_id:04X}"):
+                info = build_connected_device_info(
+                    product_id=product_id,
+                    discovered_features=("ADJUSTABLE_DPI (0x2201)",),
+                )
+
+                self.assertTrue(info.capabilities.adjustable_dpi)
+                self.assertEqual(info.dpi_min, 200)
+                self.assertIn("mode_shift", info.supported_buttons)
+
     def test_generic_fallback_exposes_only_generic_capabilities(self):
         info = build_connected_device_info(
             product_id=0xB999,
