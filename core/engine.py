@@ -365,8 +365,11 @@ class Engine:
         hg = self.hook._hid_gesture
         if hg:
             def _write():
-                ok = hg.set_smart_shift(mode, new_enabled, threshold)
-                print(f"[Engine] toggle_smart_shift device write -> {'OK' if ok else 'FAILED'}")
+                if self._device_supports_smart_shift(
+                    getattr(hg, "connected_device", None)
+                ):
+                    ok = hg.set_smart_shift(mode, new_enabled, threshold)
+                    print(f"[Engine] toggle_smart_shift device write -> {'OK' if ok else 'FAILED'}")
             threading.Thread(target=_write, daemon=True, name="ToggleSmartShift").start()
 
     def _switch_scroll_mode(self):
@@ -391,8 +394,11 @@ class Engine:
         hg = self.hook._hid_gesture
         if hg:
             def _write():
-                ok = hg.set_smart_shift(new_mode, False, threshold)
-                print(f"[Engine] switch_scroll_mode device write -> {'OK' if ok else 'FAILED'}")
+                if self._device_supports_smart_shift(
+                    getattr(hg, "connected_device", None)
+                ):
+                    ok = hg.set_smart_shift(new_mode, False, threshold)
+                    print(f"[Engine] switch_scroll_mode device write -> {'OK' if ok else 'FAILED'}")
             threading.Thread(target=_write, daemon=True, name="SwitchScrollMode").start()
 
     _DEFAULT_DPI_PRESETS = [800, 1200, 1600, 2400]
@@ -603,7 +609,13 @@ class Engine:
 
         # Phase A: apply Smart Shift immediately so the physical wheel mode
         # converges before the settled replay.
-        if saved_ss and getattr(hg, "smart_shift_supported", False):
+        if (
+            saved_ss
+            and getattr(hg, "smart_shift_supported", False)
+            and self._device_supports_smart_shift(
+                getattr(hg, "connected_device", None)
+            )
+        ):
             if not hasattr(hg, "set_smart_shift"):
                 replay_ok = False
             else:
@@ -635,7 +647,11 @@ class Engine:
                 replay_ok = False
                 retry_dpi = True
 
-        if saved_ss and getattr(hg, "smart_shift_supported", False):
+        if (
+            saved_ss
+            and getattr(hg, "smart_shift_supported", False)
+            and self._device_supports_smart_shift(hg.connected_device)
+        ):
             if not hasattr(hg, "set_smart_shift"):
                 replay_ok = False
             elif hg.set_smart_shift(saved_ss, ss_enabled, ss_threshold):
@@ -665,7 +681,11 @@ class Engine:
                         self._dpi_read_cb(saved_dpi)
                     except Exception:
                         pass
-            if retry_smart_shift and getattr(hg, "smart_shift_supported", False):
+            if (
+                retry_smart_shift
+                and getattr(hg, "smart_shift_supported", False)
+                and self._device_supports_smart_shift(hg.connected_device)
+            ):
                 if not hasattr(hg, "set_smart_shift") or not hg.set_smart_shift(
                     saved_ss, ss_enabled, ss_threshold
                 ):
@@ -768,6 +788,7 @@ class Engine:
                     not self._replay_inflight
                     and now - _last_ss >= _ss_poll_interval
                     and hg.smart_shift_supported
+                    and self._device_supports_smart_shift(hg.connected_device)
                 ):
                     _last_ss = now
                     ss_mode = hg.read_smart_shift()
@@ -812,6 +833,20 @@ class Engine:
         if not hasattr(capabilities, "adjustable_dpi"):
             return True
         if capabilities.adjustable_dpi:
+            return True
+        inventory = getattr(device, "capability_inventory", None)
+        if inventory is None:
+            return True
+        return not bool(getattr(inventory, "raw_features", ()))
+
+    @staticmethod
+    def _device_supports_smart_shift(device):
+        capabilities = getattr(device, "capabilities", None)
+        if capabilities is None:
+            return True
+        if not hasattr(capabilities, "smart_shift"):
+            return True
+        if capabilities.smart_shift:
             return True
         inventory = getattr(device, "capability_inventory", None)
         if inventory is None:
@@ -882,6 +917,10 @@ class Engine:
         save_config(self.cfg)
         hg = self.hook._hid_gesture
         if hg:
+            if not self._device_supports_smart_shift(
+                getattr(hg, "connected_device", None)
+            ):
+                return False
             result = hg.set_smart_shift(mode, smart_shift_enabled, threshold)
             print(f"[Engine] set_smart_shift -> {'OK' if result else 'FAILED'}")
             return result
@@ -891,7 +930,13 @@ class Engine:
     @property
     def smart_shift_supported(self):
         hg = self.hook._hid_gesture
-        return hg.smart_shift_supported if hg else False
+        return bool(
+            hg
+            and hg.smart_shift_supported
+            and self._device_supports_smart_shift(
+                getattr(hg, "connected_device", None)
+            )
+        )
 
     def reload_mappings(self):
         """

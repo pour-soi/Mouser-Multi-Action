@@ -315,6 +315,48 @@ class EngineSmartShiftTests(unittest.TestCase):
             engine.set_smart_shift("ratchet", True, 25)
         hg.set_smart_shift.assert_called_once_with("ratchet", True, 25)
 
+    def test_set_smart_shift_writes_when_capability_reports_smart_shift(self):
+        engine = self._make_engine()
+        hg = Mock(smart_shift_supported=True)
+        hg.connected_device = SimpleNamespace(
+            name="MX Master 3S",
+            capabilities=SimpleNamespace(smart_shift=True),
+        )
+        engine.hook._hid_gesture = hg
+        with patch("core.engine.save_config"):
+            result = engine.set_smart_shift("ratchet", True, 25)
+        self.assertTrue(result)
+        hg.set_smart_shift.assert_called_once_with("ratchet", True, 25)
+
+    def test_set_smart_shift_skips_when_capability_reports_no_smart_shift(self):
+        engine = self._make_engine()
+        hg = Mock(smart_shift_supported=True)
+        hg.connected_device = SimpleNamespace(
+            name="Mystery Logitech Mouse",
+            capabilities=SimpleNamespace(smart_shift=False),
+            capability_inventory=SimpleNamespace(
+                raw_features=("ADJUSTABLE_DPI (0x2201)",),
+            ),
+        )
+        engine.hook._hid_gesture = hg
+        with patch("core.engine.save_config"):
+            result = engine.set_smart_shift("ratchet", True, 25)
+        self.assertFalse(result)
+        hg.set_smart_shift.assert_not_called()
+
+    def test_set_smart_shift_preserves_fallback_when_capability_is_unknown(self):
+        engine = self._make_engine()
+        hg = Mock(smart_shift_supported=True)
+        hg.connected_device = SimpleNamespace(
+            name="Sparse Runtime Device",
+            capabilities=SimpleNamespace(smart_shift=False),
+        )
+        engine.hook._hid_gesture = hg
+        with patch("core.engine.save_config"):
+            result = engine.set_smart_shift("ratchet", True, 25)
+        self.assertTrue(result)
+        hg.set_smart_shift.assert_called_once_with("ratchet", True, 25)
+
     def test_set_smart_shift_skips_hid_gesture_when_not_connected(self):
         engine = self._make_engine()
         engine.hook._hid_gesture = None
