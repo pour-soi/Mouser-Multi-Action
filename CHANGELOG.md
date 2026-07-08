@@ -6,6 +6,14 @@ This project uses Semantic Versioning.
 
 ## Unreleased
 
+## v1.0.0 - 2026-07-08
+
+### Added
+
+- Published the first official PourInput release.
+- Promoted the Windows release package to `PourInput-v1.0.0-Windows.zip`.
+- Updated application, updater, installer, package, and executable metadata to version 1.0.0.
+
 ### Documentation
 
 - Reworked the README for a public open-source release.
@@ -14,7 +22,7 @@ This project uses Semantic Versioning.
 - Updated issue templates to use PourInput naming consistently.
 - Replaced stale upstream release links in the Chinese README.
 
-## v0.1.0 - 2026-07-06
+## Initial Development Release - 2026-07-06
 
 ### Added
 

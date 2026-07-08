@@ -18,14 +18,14 @@ function Normalize-Version([string]$Value) {
         $v = $v.Substring(1)
     }
     if ($v -notmatch '^\d+\.\d+\.\d+$') {
-        throw "Version must use Semantic Versioning, for example v0.1.0."
+        throw "Version must use Semantic Versioning, for example v1.0.0."
     }
     return $v
 }
 
 function Next-Patch-Version {
     if (-not (Test-Path -LiteralPath $ReleaseDir)) {
-        return "0.1.0"
+        return "1.0.0"
     }
 
     $versions = Get-ChildItem -LiteralPath $ReleaseDir -Filter "$PackageBaseName-v*-Windows.zip" -File |
@@ -41,7 +41,7 @@ function Next-Patch-Version {
         Sort-Object Major, Minor, Patch
 
     if (-not $versions) {
-        return "0.1.0"
+        return "1.0.0"
     }
 
     $latest = $versions[-1]

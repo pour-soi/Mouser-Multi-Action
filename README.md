@@ -11,7 +11,7 @@ PourInput is an open-source fork of [TomBadash/Mouser](https://github.com/TomBad
 
 Supported mouse buttons can have independent **Click Action** and **Long Press Action** mappings. For example, one button can take a screenshot when clicked and switch scroll mode when held.
 
-Current release: `v0.1.0`
+Current release: `v1.0.0`
 
 Repository: `pour-soi/PourInput`
 
@@ -58,9 +58,9 @@ Shows version, maintainer, and build information.
 
 ## Installation
 
-1. Download `PourInput-v0.1.0-Windows.zip` from the [latest release](https://github.com/pour-soi/PourInput/releases/latest).
+1. Download `PourInput-v1.0.0-Windows.zip` from the [latest release](https://github.com/pour-soi/PourInput/releases/latest).
 2. Extract the zip file.
-3. Run `PourInput-v0.1.0/PourInput.exe`.
+3. Run `PourInput-v1.0.0/PourInput.exe`.
 4. Quit any other PourInput or PourInput build before launching this one.
 
 The packaged Windows app includes the runtime files it needs. You do not need to install Python to use a release build.
@@ -136,7 +136,7 @@ Raw build output is written to `dist/PourInput/`.
 Create a versioned Windows release package:
 
 ```powershell
-.\scripts\create_release.ps1 -Version v0.1.0
+.\scripts\create_release.ps1 -Version v1.0.0
 ```
 
 If no version is specified, the packaging script reads the latest versioned Windows zip in `release/` and increments the patch version.
@@ -145,15 +145,15 @@ Release output:
 
 ```text
 release/
-    PourInput-v0.1.0-Windows.zip
-    RELEASE_NOTES-v0.1.0.md
+    PourInput-v1.0.0-Windows.zip
+    RELEASE_NOTES-v1.0.0.md
     CHANGELOG.md
 ```
 
 Zip layout:
 
 ```text
-PourInput-v0.1.0/
+PourInput-v1.0.0/
     PourInput.exe
     LICENSE
     README.md
@@ -181,9 +181,10 @@ The release script removes only temporary build output before packaging. It pres
 - Macro support.
 - Sequential actions.
 
-### v1.0.0
+### After v1.0.0
 
-- Stable release.
+- Broader device coverage.
+- More configurable multi-action timing.
 
 ## Known Issues
 

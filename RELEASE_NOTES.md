@@ -1,6 +1,6 @@
-# PourInput v0.1.0
+# PourInput v1.0.0
 
-Release date: 2026-07-06
+Release date: 2026-07-08
 
 Repository: `pour-soi/PourInput`
 
@@ -10,9 +10,11 @@ Maintainer: `pour-soi`
 
 ## Summary
 
-PourInput v0.1.0 is the first release of this customized fork of TomBadash/Mouser.
+PourInput v1.0.0 is the first official release of PourInput, a customized fork of TomBadash/Mouser.
 
 It adds a generic Multi-Action Button framework so supported mouse buttons can use separate Click and Long Press actions. The goal is simple: one physical button can now cover a primary action and a secondary action without adding button-specific timing code for every new control.
+
+This release also finalizes the PourInput application identity, Windows executable metadata, updater metadata, installer metadata, and release package naming.
 
 ## New Features
 
@@ -25,6 +27,7 @@ It adds a generic Multi-Action Button framework so supported mouse buttons can u
 - UI for Click Action and Long Press Action
 - Versioned Windows release packaging
 - Consistent PourInput naming and pour-soi maintainer metadata
+- Official `PourInput-v1.0.0-Windows.zip` release artifact
 
 ## Bug Fixes
 
