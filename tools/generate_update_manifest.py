@@ -35,11 +35,19 @@ def _version_from_tag(tag: str) -> str:
     return tag[1:] if tag.startswith("v") else tag
 
 
+def _asset_platform_keys(tag: str) -> dict[str, str]:
+    version = _version_from_tag(tag)
+    return {
+        **_ASSET_PLATFORM_KEYS,
+        f"PourInput-v{version}-Windows.zip": "windows-x64",
+    }
+
+
 def build_payload(args) -> dict:
     asset_dir = Path(args.asset_dir)
     version = _version_from_tag(args.tag)
     assets = {}
-    for name, platform_key in _ASSET_PLATFORM_KEYS.items():
+    for name, platform_key in _asset_platform_keys(args.tag).items():
         path = asset_dir / name
         if not path.exists():
             continue
