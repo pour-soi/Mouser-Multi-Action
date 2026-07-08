@@ -494,6 +494,14 @@ class RuntimeSupportedButtonTests(unittest.TestCase):
                 self.assertTrue(info.capabilities.smart_shift)
                 self.assertIn("mode_shift", info.supported_buttons)
 
+    def test_mx_master_devices_keep_gesture_capability(self):
+        for product_id in (0xB023, 0xB034, 0xB042):
+            with self.subTest(product_id=f"0x{product_id:04X}"):
+                info = build_connected_device_info(product_id=product_id)
+
+                self.assertTrue(info.capabilities.gesture_button)
+                self.assertIn("gesture", info.supported_buttons)
+
     def test_generic_fallback_exposes_only_generic_capabilities(self):
         info = build_connected_device_info(
             product_id=0xB999,

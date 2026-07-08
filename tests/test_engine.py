@@ -19,6 +19,8 @@ class _FakeMouseHook:
         self.start_called = False
         self.stop_called = False
         self.sync_hid_extra_diverts_calls = 0
+        self.blocked_events = []
+        self.registered_events = []
 
     def set_debug_callback(self, cb):
         self._debug_callback = cb
@@ -36,13 +38,14 @@ class _FakeMouseHook:
         self._gesture_config = kwargs
 
     def block(self, event_type):
-        pass
+        self.blocked_events.append(event_type)
 
     def register(self, event_type, callback):
-        pass
+        self.registered_events.append(event_type)
 
     def reset_bindings(self):
-        pass
+        self.blocked_events = []
+        self.registered_events = []
 
     def sync_hid_extra_diverts(self):
         self.sync_hid_extra_diverts_calls += 1
@@ -188,6 +191,48 @@ class EngineHorizontalScrollTests(unittest.TestCase):
             connected_device=SimpleNamespace(name="MX Master 3S")
         )
         self.assertTrue(engine.hid_features_ready)
+
+    def test_gesture_mapping_enabled_when_capability_reports_gesture_button(self):
+        engine = self._make_engine()
+        engine.cfg["profiles"]["default"]["mappings"]["gesture_left"] = "alt_tab"
+        engine.hook.connected_device = SimpleNamespace(
+            capabilities=SimpleNamespace(gesture_button=True),
+            capability_inventory=SimpleNamespace(has_reprog_controls=True),
+        )
+
+        with patch("core.engine.load_config", return_value=engine.cfg):
+            engine.reload_mappings()
+
+        self.assertTrue(engine.hook._gesture_config["enabled"])
+        self.assertIn("gesture_swipe_left", engine.hook.registered_events)
+
+    def test_gesture_mapping_skips_when_capability_reports_no_gesture_button(self):
+        engine = self._make_engine()
+        engine.cfg["profiles"]["default"]["mappings"]["gesture_left"] = "alt_tab"
+        engine.hook.connected_device = SimpleNamespace(
+            capabilities=SimpleNamespace(gesture_button=False),
+            capability_inventory=SimpleNamespace(has_reprog_controls=True),
+        )
+
+        with patch("core.engine.load_config", return_value=engine.cfg):
+            engine.reload_mappings()
+
+        self.assertFalse(engine.hook._gesture_config["enabled"])
+        self.assertNotIn("gesture_swipe_left", engine.hook.registered_events)
+        self.assertNotIn("gesture_swipe_left", engine.hook.blocked_events)
+
+    def test_gesture_mapping_preserves_fallback_when_capability_is_unknown(self):
+        engine = self._make_engine()
+        engine.cfg["profiles"]["default"]["mappings"]["gesture_left"] = "alt_tab"
+        engine.hook.connected_device = SimpleNamespace(
+            capabilities=SimpleNamespace(gesture_button=False),
+        )
+
+        with patch("core.engine.load_config", return_value=engine.cfg):
+            engine.reload_mappings()
+
+        self.assertTrue(engine.hook._gesture_config["enabled"])
+        self.assertIn("gesture_swipe_left", engine.hook.registered_events)
 
     def test_reload_mappings_syncs_live_hid_extra_diverts(self):
         engine = self._make_engine()

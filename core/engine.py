@@ -109,9 +109,16 @@ class Engine:
         if hasattr(self.hook, "ignore_trackpad"):
             self.hook.ignore_trackpad = settings.get("ignore_trackpad", True)
         self.hook.debug_mode = self._debug_events_enabled
+        device = getattr(self, "connected_device", None)
+        device_supports_gesture = self._device_supports_gesture_button(device)
         self.hook.configure_gestures(
-            enabled=any(mappings.get(key, "none") != "none"
-                        for key in GESTURE_DIRECTION_BUTTONS),
+            enabled=(
+                device_supports_gesture
+                and any(
+                    mappings.get(key, "none") != "none"
+                    for key in GESTURE_DIRECTION_BUTTONS
+                )
+            ),
             threshold=settings.get("gesture_threshold", 50),
             deadzone=settings.get("gesture_deadzone", 40),
             timeout_ms=settings.get("gesture_timeout_ms", 3000),
@@ -121,7 +128,6 @@ class Engine:
         # at least one profile maps it to an action.  When no device is
         # connected yet, assume the button exists (safe: if the device
         # turns out not to have it, the divert simply has no effect).
-        device = getattr(self, "connected_device", None)
         device_buttons = getattr(device, "supported_buttons", None)
         has_mode_shift = device_buttons is None or "mode_shift" in device_buttons
         self.hook.divert_mode_shift = (
@@ -149,6 +155,8 @@ class Engine:
 
         for btn_key, action_id in mappings.items():
             if btn_key.endswith("_long"):
+                continue
+            if btn_key.startswith("gesture") and not device_supports_gesture:
                 continue
             events = list(BUTTON_TO_EVENTS.get(btn_key, ()))
             long_action_id = mappings.get(long_press_mapping_key(btn_key), "none")
@@ -852,6 +860,20 @@ class Engine:
         if inventory is None:
             return True
         return not bool(getattr(inventory, "raw_features", ()))
+
+    @staticmethod
+    def _device_supports_gesture_button(device):
+        capabilities = getattr(device, "capabilities", None)
+        if capabilities is None:
+            return True
+        if not hasattr(capabilities, "gesture_button"):
+            return True
+        if capabilities.gesture_button:
+            return True
+        inventory = getattr(device, "capability_inventory", None)
+        if inventory is None:
+            return True
+        return not bool(getattr(inventory, "has_reprog_controls", False))
 
     def set_battery_callback(self, cb):
         """Register ``cb(level: int)`` invoked when battery level is read (0-100)."""
