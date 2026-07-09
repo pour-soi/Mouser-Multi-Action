@@ -879,6 +879,87 @@ class BackendDeviceLayoutTests(unittest.TestCase):
                 ["middle", "generic_xbutton1", "generic_xbutton2"],
             )
 
+    def test_device_status_no_logitech_generic_off(self):
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["generic_mouse_enabled"] = False
+
+        with patch("ui.backend.sys.platform", "win32"):
+            backend = self._make_backend(cfg=cfg)
+
+        self.assertFalse(backend.mouseConnected)
+        self.assertEqual(backend.deviceStatusKind, "no_supported_mouse")
+
+    def test_device_status_no_logitech_generic_on(self):
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["generic_mouse_enabled"] = True
+
+        with patch("ui.backend.sys.platform", "win32"):
+            backend = self._make_backend(cfg=cfg)
+
+        self.assertFalse(backend.mouseConnected)
+        self.assertEqual(backend.deviceStatusKind, "generic_ready")
+
+    def test_generic_mouse_toggle_updates_device_status_immediately(self):
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["generic_mouse_enabled"] = False
+
+        with patch("ui.backend.sys.platform", "win32"):
+            backend = self._make_backend(cfg=cfg)
+            notifications = []
+            backend.deviceStatusChanged.connect(lambda: notifications.append(backend.deviceStatusKind))
+
+            backend.setGenericMouseEnabled(True)
+            backend.setGenericMouseEnabled(False)
+
+        self.assertEqual(notifications, ["generic_ready", "no_supported_mouse"])
+        self.assertFalse(backend.mouseConnected)
+        self.assertFalse(backend._mouse_connected)
+
+    def test_logitech_connected_takes_precedence_over_generic_ready(self):
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["generic_mouse_enabled"] = True
+        device = SimpleNamespace(
+            key="mx_master_3",
+            display_name="MX Master 3",
+            dpi_min=200,
+            dpi_max=8000,
+            ui_layout="mx_master_3",
+        )
+
+        with patch("ui.backend.sys.platform", "win32"):
+            backend = self._make_backend(
+                engine=_FakeEngine(device_connected=True, connected_device=device),
+                cfg=cfg,
+            )
+
+        self.assertTrue(backend.mouseConnected)
+        self.assertEqual(backend.deviceStatusKind, "logitech_connected")
+        self.assertEqual(backend.deviceDisplayName, "MX Master 3")
+
+    def test_logitech_disconnect_falls_back_to_generic_ready_when_enabled(self):
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["generic_mouse_enabled"] = True
+        device = SimpleNamespace(
+            key="mx_master_3",
+            display_name="MX Master 3",
+            dpi_min=200,
+            dpi_max=8000,
+            ui_layout="mx_master_3",
+        )
+
+        with patch("ui.backend.sys.platform", "win32"):
+            backend = self._make_backend(
+                engine=_FakeEngine(device_connected=True, connected_device=device),
+                cfg=cfg,
+            )
+            notifications = []
+            backend.deviceStatusChanged.connect(lambda: notifications.append(backend.deviceStatusKind))
+            backend._handleConnectionChange(False)
+
+        self.assertFalse(backend.mouseConnected)
+        self.assertEqual(backend.deviceStatusKind, "generic_ready")
+        self.assertEqual(notifications, ["generic_ready"])
+
     def test_generic_mouse_mode_coexists_with_logitech_layout_without_duplicates(self):
         cfg = copy.deepcopy(DEFAULT_CONFIG)
         cfg["settings"]["generic_mouse_enabled"] = True

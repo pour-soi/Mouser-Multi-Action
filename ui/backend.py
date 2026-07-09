@@ -218,6 +218,7 @@ class Backend(QObject):
     dpiFromDevice = Signal(int)
     smartShiftChanged = Signal()
     mouseConnectedChanged = Signal()
+    deviceStatusChanged = Signal()
     hidFeaturesReadyChanged = Signal()
     batteryLevelChanged = Signal()
     debugLogChanged = Signal()
@@ -652,6 +653,10 @@ class Backend(QObject):
     @Property(bool, notify=mouseConnectedChanged)
     def mouseConnected(self):
         return self._mouse_connected
+
+    @Property(str, notify=deviceStatusChanged)
+    def deviceStatusKind(self):
+        return self._device_status_kind()
 
     @Property(bool, notify=hidFeaturesReadyChanged)
     def hidFeaturesReady(self):
@@ -1198,12 +1203,15 @@ class Backend(QObject):
         settings = self._cfg.setdefault("settings", {})
         if bool(settings.get("generic_mouse_enabled", False)) == enabled:
             return
+        previous_status_kind = self._device_status_kind()
         settings["generic_mouse_enabled"] = enabled
         save_config(self._cfg)
         if self._engine:
             self._engine.cfg = self._cfg
             self._engine.reload_mappings()
         self.settingsChanged.emit()
+        if self._device_status_kind() != previous_status_kind:
+            self.deviceStatusChanged.emit()
         self.mappingsChanged.emit()
         self.deviceLayoutChanged.emit()
         self._status("status.saved", "Saved")
@@ -1841,6 +1849,7 @@ class Backend(QObject):
     @Slot(bool)
     def _handleConnectionChange(self, connected):
         """Runs on Qt main thread."""
+        previous_status_kind = self._device_status_kind()
         previous_connected = self._mouse_connected
         previous_hid_features_ready = self._hid_features_ready
         self._mouse_connected = connected
@@ -1865,6 +1874,15 @@ class Backend(QObject):
             self._append_debug_line(
                 f"Mouse {'connected' if connected else 'disconnected'}"
             )
+        if self._device_status_kind() != previous_status_kind:
+            self.deviceStatusChanged.emit()
+
+    def _device_status_kind(self):
+        if self._mouse_connected:
+            return "logitech_connected"
+        if self._generic_mouse_enabled():
+            return "generic_ready"
+        return "no_supported_mouse"
 
     def _resolved_connected_device(self):
         device = getattr(self._engine, "connected_device", None) if self._engine else None

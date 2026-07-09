@@ -896,7 +896,9 @@ Item {
                                 anchors.verticalCenter: parent.verticalCenter
                                 color: backend.mouseConnected
                                        ? Qt.rgba(0, 0.83, 0.67, 0.12)
-                                       : Qt.rgba(0.9, 0.3, 0.3, 0.15)
+                                       : (backend.deviceStatusKind === "generic_ready"
+                                          ? Qt.rgba(0, 0.83, 0.67, 0.12)
+                                          : Qt.rgba(0.9, 0.3, 0.3, 0.15))
 
                                 Row {
                                     id: statusRow
@@ -905,19 +907,21 @@ Item {
 
                                     Rectangle {
                                         width: 7; height: 7; radius: 4
-                                        color: backend.mouseConnected
-                                               ? theme.accent : "#e05555"
+                                        color: backend.deviceStatusKind === "no_supported_mouse"
+                                               ? "#e05555" : theme.accent
                                         anchors.verticalCenter: parent.verticalCenter
                                     }
                                     Text {
-                                        text: backend.mouseConnected
-                                              ? (s["mouse.connected"]
-                                                 + (backend.connectionType !== ""
-                                                    ? " · " + backend.connectionType : ""))
-                                              : s["mouse.not_connected"]
+                                        text: backend.deviceStatusKind === "logitech_connected"
+                                              ? ((s["mouse.connected"] || "Connected")
+                                                 + (backend.deviceDisplayName !== ""
+                                                    ? " \u2014 " + backend.deviceDisplayName : ""))
+                                              : (backend.deviceStatusKind === "generic_ready"
+                                                 ? (s["mouse.generic_ready"] || "Generic Mouse Mode Ready")
+                                                 : (s["mouse.no_supported_mouse_detected"] || "No supported mouse detected"))
                                         font { family: uiState.fontFamily; pixelSize: 11 }
-                                        color: backend.mouseConnected
-                                               ? theme.accent : "#e05555"
+                                        color: backend.deviceStatusKind === "no_supported_mouse"
+                                               ? "#e05555" : theme.accent
                                     }
                                 }
                             }

@@ -24,6 +24,8 @@ _TRANSLATIONS = {
         # Mouse page — connection / status
         "mouse.connected": "Connected",
         "mouse.not_connected": "Not Connected",
+        "mouse.generic_ready": "Generic Mouse Mode Ready",
+        "mouse.no_supported_mouse_detected": "No supported mouse detected",
         "mouse.waiting_for_connection": "Waiting for connection",
         "mouse.connect_mouse": "Connect your Logitech mouse",
         "mouse.connect_mouse_desc": "PourInput will detect the active device, unlock button mapping, and enable the correct layout mode as soon as the mouse is available.",
@@ -307,6 +309,8 @@ _TRANSLATIONS = {
 
         "mouse.connected": "\u5df2\u8fde\u63a5",
         "mouse.not_connected": "\u672a\u8fde\u63a5",
+        "mouse.generic_ready": "\u901a\u7528\u9f20\u6807\u6a21\u5f0f\u5df2\u5c31\u7eea",
+        "mouse.no_supported_mouse_detected": "\u672a\u68c0\u6d4b\u5230\u53d7\u652f\u6301\u7684\u9f20\u6807",
         "mouse.waiting_for_connection": "\u7b49\u5f85\u8fde\u63a5",
         "mouse.connect_mouse": "\u8fde\u63a5\u60a8\u7684\u7f57\u6280\u9f20\u6807",
         "mouse.connect_mouse_desc": "PourInput \u5c06\u68c0\u6d4b\u6d3b\u52a8\u8bbe\u5907\uff0c\u89e3\u9501\u6309\u952e\u6620\u5c04\uff0c\u5e76\u5728\u9f20\u6807\u53ef\u7528\u540e\u542f\u7528\u6b63\u786e\u7684\u5e03\u5c40\u6a21\u5f0f\u3002",
@@ -572,6 +576,8 @@ _TRANSLATIONS = {
 
         "mouse.connected": "\u5df2\u9023\u7dda",
         "mouse.not_connected": "\u672a\u9023\u7dda",
+        "mouse.generic_ready": "\u901a\u7528\u6ed1\u9f20\u6a21\u5f0f\u5df2\u5c31\u7dd2",
+        "mouse.no_supported_mouse_detected": "\u672a\u5075\u6e2c\u5230\u53d7\u652f\u63f4\u7684\u6ed1\u9f20",
         "mouse.waiting_for_connection": "\u7b49\u5f85\u9023\u7dda",
         "mouse.connect_mouse": "\u9023\u63a5\u60a8\u7684\u7f85\u6280\u6ed1\u9f20",
         "mouse.connect_mouse_desc": "PourInput \u5c07\u5075\u6e2c\u6d3b\u52d5\u88dd\u7f6e\uff0c\u89e3\u9396\u6309\u9375\u5c0d\u6620\uff0c\u4e26\u5728\u6ed1\u9f20\u53ef\u7528\u5f8c\u555f\u7528\u6b63\u78ba\u7684\u7248\u9762\u914d\u7f6e\u6a21\u5f0f\u3002",

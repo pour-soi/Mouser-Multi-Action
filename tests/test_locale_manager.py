@@ -38,6 +38,8 @@ class LocaleManagerTranslationTests(unittest.TestCase):
 
         self.assertEqual(manager.language, "zh_CN")
         self.assertEqual(manager.tr("mouse.generic_mouse_mode"), "\u901a\u7528\u9f20\u6807\u6a21\u5f0f")
+        self.assertEqual(manager.tr("mouse.generic_ready"), "\u901a\u7528\u9f20\u6807\u6a21\u5f0f\u5df2\u5c31\u7eea")
+        self.assertEqual(manager.tr("mouse.no_supported_mouse_detected"), "\u672a\u68c0\u6d4b\u5230\u53d7\u652f\u6301\u7684\u9f20\u6807")
         self.assertEqual(manager.tr("mouse.click_action"), "\u5355\u51fb\u64cd\u4f5c")
         self.assertEqual(manager.tr("mouse.long_press_action"), "\u957f\u6309\u64cd\u4f5c")
 
@@ -48,6 +50,8 @@ class LocaleManagerTranslationTests(unittest.TestCase):
 
         self.assertEqual(manager.language, "en")
         self.assertEqual(manager.tr("mouse.generic_mouse_mode"), "Generic Mouse Mode")
+        self.assertEqual(manager.tr("mouse.generic_ready"), "Generic Mouse Mode Ready")
+        self.assertEqual(manager.tr("mouse.no_supported_mouse_detected"), "No supported mouse detected")
         self.assertEqual(manager.tr("mouse.click_action"), "Click Action")
         self.assertEqual(manager.tr("mouse.long_press_action"), "Long Press Action")
 

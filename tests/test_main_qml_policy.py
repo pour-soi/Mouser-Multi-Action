@@ -36,6 +36,9 @@ class LanguageSwitchingQmlPolicyTests(unittest.TestCase):
         self.assertIn('s["mouse.copy_device_info"]', source)
         self.assertIn('s["mouse.device_info_copied"]', source)
         self.assertIn('s["mouse.no_device_connected"]', source)
+        self.assertIn("backend.deviceStatusKind", source)
+        self.assertIn('s["mouse.generic_ready"]', source)
+        self.assertIn('s["mouse.no_supported_mouse_detected"]', source)
         self.assertNotIn('text: "DPI PRESETS"', source)
         self.assertNotIn('text: "Copy device info"', source)
 
