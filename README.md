@@ -11,9 +11,9 @@
 [![License](https://img.shields.io/github/license/pour-soi/PourInput)](LICENSE)
 [![Python 3.12](https://img.shields.io/badge/python-3.12-blue)](requirements.txt)
 
-PourInput is an open-source fork of [TomBadash/Mouser](https://github.com/TomBadash/Mouser) that adds a generic Multi-Action Button framework for Logitech HID++ mice.
+PourInput is an open-source mouse customization platform for advanced button actions and multi-action input.
 
-Supported mouse buttons can have independent **Click Action** and **Long Press Action** mappings. For example, one button can take a screenshot when clicked and switch scroll mode when held.
+Originally developed from [Mouser](https://github.com/TomBadash/Mouser), PourInput has evolved with its own multi-action system, capability-based device support, Generic Mouse Mode, and independent roadmap.
 
 Current release: `v1.1.0`
 
@@ -21,23 +21,24 @@ Repository: `pour-soi/PourInput`
 
 ## Why PourInput?
 
-Logitech mice often expose useful extra controls, but not every workflow fits a single action per button. PourInput solves that by making each supported button behave like two configurable controls:
+Many mice expose useful extra controls, but not every workflow fits a single action per button. PourInput focuses on making supported mouse buttons more useful without hiding how the input path works.
 
-- **Click** for the fast action you use constantly.
-- **Long Press** for the secondary action you still want nearby.
+Multi-Action allows one physical mouse button to perform different actions depending on how it is used. PourInput currently supports separate actions for click and long press. For example, one side button can copy text when clicked and run Browser Forward when held.
 
-Compared with the original Mouser project, this fork focuses on reusable multi-action button handling instead of one-off button-specific timing logic. Compared with Logitech Options+, this project is open source, scriptable, reviewable, and easier to inspect when debugging HID++ behavior. It does not replace every Options+ feature; it is a focused tool for configurable button remapping.
+Generic Mouse Mode allows standard Windows mouse side buttons to use PourInput actions without requiring Logitech HID++ support. Supported side buttons can use different actions for click and long press, and disabling the mode restores their native Back / Forward behavior.
+
+Compared with Logitech Options+, PourInput is open source, scriptable, reviewable, and easier to inspect when debugging input behavior. It does not replace every Options+ feature; it is a focused tool for configurable button remapping and advanced button actions.
 
 ## Features
 
-- Generic **Multi-Action** framework — supported buttons can perform different actions on **Click** and **Long Press**.
-- **Extended button customization** — assign independent Click and Long Press actions to supported buttons, including **Mode Shift**, **Back**, and **Forward**.
-- Improved **Mode Shift** handling — more reliable event detection and HID++ synchronization.
-- Application-specific profiles — automatically switch button mappings for different applications.
-- Capability-based device support — features such as DPI, SmartShift, battery reporting, gestures, and extra buttons are enabled from detected HID++ capabilities where available.
-- Pointer, scrolling, and SmartShift controls — configure supported Logitech device features.
-- Built-in screenshot actions — capture the full screen or a selected region to the clipboard or a file.
-- Portable Windows release — no Python installation required.
+- **Multi-Action click / long-press support** - supported buttons can run one action when clicked and another action when held.
+- **Generic Mouse Mode for standard Windows side buttons** - standard Windows XBUTTON side-button events can be mapped to PourInput actions without Logitech HID++; this has been manually verified with a ZOWIE mouse.
+- **Runtime Generic Mouse Mode switching** - when the mode is turned off, PourInput removes active XBUTTON callbacks and blocking so native browser Back / Forward behavior returns without restarting.
+- **Capability-based device support foundations** - PourInput enables features according to what a device can actually do, rather than treating support as a simple brand-based yes/no list.
+- **Logitech HID++ advanced features where supported** - supported Logitech devices may expose extra controls such as Mode Shift, SmartShift, adjustable DPI, battery reporting, gesture controls, and horizontal scroll.
+- **Application-specific profiles** - automatically switch button mappings for different applications.
+- **Built-in screenshot actions** - capture the full screen or a selected region to the clipboard or a file.
+- **Portable Windows release** - no Python installation required for packaged builds.
 
 ## Screenshots
 
@@ -79,39 +80,49 @@ Each supported button can show:
 
 Examples:
 
-- Back: Click -> Browser Back, Long Press -> Copy
-- Forward: Click -> Browser Forward, Long Press -> Paste
-- Mode Shift: Click -> Screenshot Region -> Clipboard, Long Press -> Switch Scroll Mode
+- Generic XBUTTON1: Click -> Copy, Long Press -> Browser Forward
+- Generic XBUTTON2: Click -> Paste, Long Press -> Browser Back
+- Mode Shift on a supported Logitech device: Click -> Screenshot Region -> Clipboard, Long Press -> Switch Scroll Mode
 
 A press shorter than 300 ms runs the Click Action. A press held for at least 300 ms runs the Long Press Action when released.
 
 If no Long Press Action is configured, the button keeps the same behavior it had before the Multi-Action framework was added.
 
+### Generic Mouse Mode
+
+Generic Mouse Mode is a Windows-only mode for standard mouse side buttons that appear as XBUTTON1 and XBUTTON2 events. It does not require Logitech HID++ support, so a compatible non-Logitech mouse can use PourInput actions when its side buttons report standard Windows XBUTTON events.
+
+The current implementation applies to standard Windows XBUTTON side-button events only. It supports click and long-press actions, runtime ON/OFF switching, and restoration of native Back / Forward behavior when disabled.
+
+This is not universal support for every mouse, every mouse button, every operating system, or vendor-specific buttons that do not appear as standard Windows XBUTTON events. PourInput also does not yet provide reliable per-device differentiation between multiple standard mice.
+
 ## Supported Devices
 
-PourInput now uses a capability-based device support model. It still keeps cataloged layouts and known device metadata, but runtime behavior is increasingly driven by the HID++ features and controls the app can detect from the connected mouse. Where available, detected HID++ capabilities enable or limit features such as reprogrammable buttons, gesture controls, SmartShift, adjustable DPI, battery reporting, horizontal scroll, and device-specific controls.
+PourInput uses capability-based device support. This means that PourInput enables features according to what a device can actually do, rather than treating support as a simple brand-based yes/no list. A mouse with standard Windows side buttons can use Generic Mouse Mode, while a supported Logitech device may expose additional HID++ features.
 
-Some controls must be both reprogrammable and divertable before PourInput can intercept them. If capability information is missing or incomplete, PourInput falls back conservatively to the existing catalog and generic button behavior rather than assuming full support.
+Some Logitech controls must be both reprogrammable and divertable before PourInput can intercept them. If capability information is missing or incomplete, PourInput falls back conservatively to the existing catalog and generic button behavior rather than assuming full support.
 
 ### Tested Devices
 
 | Device | Status |
 |--------|--------|
+| ZOWIE mouse with standard Windows side buttons | Manually verified with Generic Mouse Mode on Windows |
 | MX Master 3 | Tested for cataloged Multi-Action controls and HID++ capability detection |
 
 ### Experimental / Potentially Compatible
 
-These devices are not claimed as officially supported unless they have been tested with PourInput. They may work when they expose matching HID++ capabilities.
+These devices are not claimed as officially supported unless they have been tested with PourInput. They may work when they expose matching standard Windows XBUTTON events or HID++ capabilities.
 
 | Device | Notes |
 |--------|-------|
+| Standard Windows mice with XBUTTON side buttons | Potentially compatible with Generic Mouse Mode for side-button click and long-press actions |
 | MX Master 3S | Expected to share many MX Master capabilities; needs user/device testing |
 | M720 Triathlon | Potentially compatible where required HID++ controls are exposed |
 | MX Anywhere series | Potentially compatible where required HID++ controls are exposed |
 | MX Master 4 / 2S / original MX Master | Potentially compatible where required HID++ controls are exposed |
 | Other Logitech HID++ devices | Potentially compatible when they expose matching reprogrammable, divertable controls |
 
-Multi-Action support is currently focused on Mode Shift, Back, and Forward where those controls are exposed. Other buttons may still be available as standard mouse events, and device-specific capabilities such as DPI, SmartShift, battery reporting, gesture controls, and horizontal scroll vary by device and firmware.
+Multi-Action support is available for Generic Mouse Mode side buttons and for supported Logitech controls where those controls are exposed. Device-specific capabilities such as DPI, SmartShift, battery reporting, gesture controls, and horizontal scroll vary by device and firmware.
 
 If your mouse is detected but a button is missing, open a device support request and include the device info JSON from the Mouse page.
 
@@ -186,8 +197,10 @@ The release script removes only temporary build output before packaging. It pres
 ## Known Limitations
 
 - Windows is the only official release target for v1.1.0.
-- PourInput is intended for Logitech HID++ devices.
-- Some features depend on device firmware and exposed HID++ capabilities.
+- Generic Mouse Mode currently supports only standard Windows XBUTTON1 / XBUTTON2 side-button events.
+- Generic Mouse Mode does not identify separate standard mice per device yet.
+- Vendor-specific buttons that do not appear as standard Windows XBUTTON events are not supported by Generic Mouse Mode.
+- Some Logitech features depend on device firmware and exposed HID++ capabilities.
 - macOS support is planned but not officially available.
 - Double Click is planned but not implemented yet.
 - Long Press timeout is fixed at 300 ms and is not configurable in the UI yet.
@@ -195,22 +208,21 @@ The release script removes only temporary build output before packaging. It pres
 
 ## Roadmap
 
-### Current (v1.1.0)
+### Completed
 
-- Multi-Action framework
-- Click / Long Press actions
-- Mode Shift improvements
-- Capability-based device support
-- Independent PourInput branding
+- **Multi-Action click / long-press support** - one supported physical button can run different actions for click and long press.
+- **Generic Mouse Mode** - standard Windows XBUTTON side buttons can use PourInput actions without Logitech HID++, and turning the mode off restores native Back / Forward behavior.
+- **Capability-based device support foundations** - PourInput can enable or limit features according to detected device capabilities instead of relying only on a static device list.
 
-### Planned
+### Planned / Future Directions
 
-- Enhanced Easy-Switch
-- More customizable button actions
-- Better device detection
-- Configuration import/export
-- macOS experimental support
-- Flow-inspired multi-device features (long-term)
+Future development is focused on Enhanced Easy-Switch, Action Layers, and more advanced multi-action workflows.
+
+- **Enhanced Easy-Switch** - Easy-Switch is Logitech's device-switching feature that allows supported mice to move between paired computers or devices. Enhanced Easy-Switch is a planned PourInput direction intended to make switching between connected computers more convenient than relying only on the mouse's original device-switching method. It may also become a foundation for future cross-device workflows.
+- **Action Layers** - Action Layers would allow the same physical mouse buttons to perform different actions in different layers, increasing the number of functions available from a limited number of buttons. For example, the same side button could do one thing in one layer and something different in another layer.
+- **Advanced Multi-Action** - Advanced Multi-Action is a future direction for expanding beyond the current click and long-press model into richer button interactions and action workflows.
+
+These are development directions, not guaranteed release commitments or fixed deadlines.
 
 ## Contributing
 

@@ -6,6 +6,15 @@ This project uses Semantic Versioning.
 
 ## Unreleased
 
+### Added
+
+- Completed Generic Mouse Mode for standard Windows XBUTTON side-button events. Supported side buttons can now use PourInput click and long-press actions without Logitech HID++ support.
+- Added a Windows single-instance guard so duplicate PourInput processes cannot create competing low-level mouse hooks.
+
+### Fixed
+
+- Restored correct runtime Generic Mouse Mode OFF behavior: disabling the mode removes XBUTTON callbacks and blocking, returning side buttons to native Back / Forward behavior.
+
 ## v1.1.0 - 2026-07-08
 
 ### Changed
