@@ -55,26 +55,6 @@ Compared with Logitech Options+, PourInput is open source, scriptable, reviewabl
 - **Built-in screenshot actions** - capture the full screen or a selected region to the clipboard or a file.
 - **Portable Windows release** - no Python installation required for packaged builds.
 
-## Screenshots
-
-### Main Window
-
-Configure the active device, profiles, and supported button mappings from the main mouse view.
-
-![Main Window](assets/screenshot-main.png)
-
-### Multi-Action Configuration
-
-Choose the action assigned to a supported Click Action or Long Press Action slot.
-
-![Multi-Action Configuration](assets/screenshot-actions.png)
-
-### About
-
-Review the PourInput version, maintainer, upstream credit, build mode, commit, and launch path.
-
-![About](assets/screenshot-about.png)
-
 ## Download
 
 Download the current Windows release from the [latest release page](https://github.com/pour-soi/PourInput/releases/latest).
