@@ -54,7 +54,7 @@ Rectangle {
                         backend.customShortcutValidationErrorInfo(text))
             _valid = false
             _canonical = ""
-            _preview = "\u2718 " + (reason || "Invalid shortcut")
+            _preview = "\u2718 " + (reason || s["key_capture.error.invalid"] || "Invalid shortcut.")
             _warning = ""
             return
         }

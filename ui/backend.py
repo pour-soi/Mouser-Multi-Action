@@ -244,9 +244,10 @@ class Backend(QObject):
     _updateInstallStateRequest = Signal(str, str, bool)
     _updateInstallProgressRequest = Signal(int)
 
-    def __init__(self, engine=None, parent=None, root_dir=None):
+    def __init__(self, engine=None, parent=None, root_dir=None, locale_manager=None):
         super().__init__(parent)
         self._engine = engine
+        self._locale_manager = locale_manager
         self._root_dir = root_dir or os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
         self._cfg = load_config()
         self._mouse_connected = False
@@ -358,8 +359,9 @@ class Backend(QObject):
                             file=sys.stderr,
                         )
                     self.settingsChanged.emit()
-                    self.statusMessage.emit(
-                        "Start at login could not be enabled. Please try again."
+                    self._status(
+                        "status.start_login_unavailable",
+                        "Start at login is not available on this platform",
                     )
         else:
             self._cfg.setdefault("settings", {})["start_at_login"] = False
@@ -367,6 +369,20 @@ class Backend(QObject):
         self._configureUpdateChecks()
         self._consumeUpdateResultMarker()
         self._cleanupStaleUpdatePreparation()
+
+    def _translate(self, key, default, *args):
+        text = default
+        tr = getattr(self._locale_manager, "tr", None)
+        if tr is not None:
+            translated = tr(key)
+            if translated and translated != key:
+                text = translated
+        for index, arg in enumerate(args, start=1):
+            text = text.replace(f"%{index}", str(arg))
+        return text
+
+    def _status(self, key, default, *args):
+        self.statusMessage.emit(self._translate(key, default, *args))
 
     # ── Properties ─────────────────────────────────────────────
 
@@ -853,11 +869,11 @@ class Backend(QObject):
             return
         if self._update_check_in_progress:
             if manual:
-                self.statusMessage.emit("Update check already running")
+                self._status("status.update_already_running", "Update check already running")
             return
         self._update_check_in_progress = True
         if manual:
-            self.statusMessage.emit("Checking for updates...")
+            self._status("status.checking_updates", "Checking for updates...")
 
         thread = threading.Thread(
             target=self._runUpdateCheck,
@@ -912,7 +928,11 @@ class Backend(QObject):
         self._pending_update_plan_path = None
         self.updateInstallChanged.emit()
         self.updateAvailable.emit(self._latest_update_version, self._latest_update_url)
-        self.statusMessage.emit(f"{APP_NAME} {self._latest_update_version} is available")
+        self._status(
+            "status.update_available",
+            f"{APP_NAME} {self._latest_update_version} is available",
+            self._latest_update_version,
+        )
 
     @Slot(bool, bool, object)
     def _handleUpdateCheckFinished(self, manual, reachable, state_data):
@@ -920,9 +940,9 @@ class Backend(QObject):
         self._persistUpdateCheckState(state_data)
         if manual:
             if reachable:
-                self.statusMessage.emit(f"{APP_NAME} is up to date")
+                self._status("status.up_to_date", f"{APP_NAME} is up to date")
             else:
-                self.statusMessage.emit("Could not check for updates")
+                self._status("status.check_updates_failed", "Could not check for updates")
 
     def _setUpdateInstallState(self, status, message="", can_install=False):
         self._update_install_status = str(status or "idle")
@@ -1010,9 +1030,10 @@ class Backend(QObject):
                     )
                     self._persistUpdateCheckState(next_state.to_dict())
                 self._setUpdateInstallState("installed", version, False)
-                self.statusMessage.emit(
-                    f"Updated to {version}" if version else "Update installed"
-                )
+                if version:
+                    self._status("scroll.update_installed_version", f"Updated to {version}.", version)
+                else:
+                    self._status("scroll.update_installed", "Update installed.")
             elif status == "failed":
                 self._setUpdateInstallState("error", "install_failed", False)
         except Exception as exc:
@@ -1135,7 +1156,7 @@ class Backend(QObject):
         if self._engine:
             self._engine.reload_mappings()
         self.mappingsChanged.emit()
-        self.statusMessage.emit("Saved")
+        self._status("status.saved", "Saved")
 
     @Slot(str, str, str)
     def setProfileMapping(self, profileName, button, actionId):
@@ -1146,7 +1167,7 @@ class Backend(QObject):
             self._engine.reload_mappings()
         self.profilesChanged.emit()
         self.mappingsChanged.emit()
-        self.statusMessage.emit("Saved")
+        self._status("status.saved", "Saved")
 
     @Slot(bool)
     def setStartMinimized(self, value):
@@ -1156,7 +1177,7 @@ class Backend(QObject):
         self._cfg.setdefault("settings", {})["start_minimized"] = hidden
         save_config(self._cfg)
         self.settingsChanged.emit()
-        self.statusMessage.emit("Saved")
+        self._status("status.saved", "Saved")
 
     @Slot(bool)
     def setCheckForUpdates(self, value):
@@ -1167,7 +1188,7 @@ class Backend(QObject):
         save_config(self._cfg)
         self.settingsChanged.emit()
         self._configureUpdateChecks()
-        self.statusMessage.emit("Saved")
+        self._status("status.saved", "Saved")
 
     @Slot(bool)
     def setGenericMouseEnabled(self, value):
@@ -1185,7 +1206,7 @@ class Backend(QObject):
         self.settingsChanged.emit()
         self.mappingsChanged.emit()
         self.deviceLayoutChanged.emit()
-        self.statusMessage.emit("Saved")
+        self._status("status.saved", "Saved")
 
     @Slot()
     def chooseScreenshotDirectory(self):
@@ -1194,14 +1215,17 @@ class Backend(QObject):
         current = self._configured_screenshot_directory() or str(screenshots_dir())
         selected = QFileDialog.getExistingDirectory(
             None,
-            "Choose Screenshot Folder",
+            self._translate("dialog.choose_screenshot_folder", "Choose Screenshot Folder"),
             current,
         )
         normalized = _normalize_directory_path(selected)
         if not normalized:
             return
         if not os.path.isdir(normalized):
-            self.statusMessage.emit("Choose a valid screenshot folder")
+            self._status(
+                "status.invalid_screenshot_folder",
+                "Choose a valid screenshot folder",
+            )
             return
         settings = self._cfg.setdefault("settings", {})
         if settings.get("screenshot_directory", "") == normalized:
@@ -1209,7 +1233,7 @@ class Backend(QObject):
         settings["screenshot_directory"] = normalized
         save_config(self._cfg)
         self.settingsChanged.emit()
-        self.statusMessage.emit("Saved")
+        self._status("status.saved", "Saved")
 
     @Slot()
     def resetScreenshotDirectory(self):
@@ -1219,7 +1243,7 @@ class Backend(QObject):
         settings["screenshot_directory"] = ""
         save_config(self._cfg)
         self.settingsChanged.emit()
-        self.statusMessage.emit("Saved")
+        self._status("status.saved", "Saved")
 
     @Slot()
     def manualCheckForUpdates(self):
@@ -1235,7 +1259,10 @@ class Backend(QObject):
     @Slot()
     def prepareLatestUpdate(self):
         if self.updateInstallInProgress:
-            self.statusMessage.emit("Update is already in progress")
+            self._status(
+                "status.update_already_running",
+                "Update is already in progress",
+            )
             return
         self._update_cancel.clear()
         self._setUpdateInstallState("checking")
@@ -1256,10 +1283,13 @@ class Backend(QObject):
     @Slot()
     def installPreparedUpdate(self):
         if not self.updateInstallEnabled:
-            self.statusMessage.emit("Open the release page to install manually")
+            self._status(
+                "status.open_release_manual",
+                "Open the release page to install manually",
+            )
             return
         if not self._pending_update_plan_path or not self._update_install_can_install:
-            self.statusMessage.emit("Update is not ready to install")
+            self._status("status.update_not_ready", "Update is not ready to install")
             return
         self._setUpdateInstallState("installing")
         engine_stopped = False
@@ -1289,7 +1319,10 @@ class Backend(QObject):
     def setStartAtLogin(self, value):
         enabled = bool(value)
         if not supports_login_startup():
-            self.statusMessage.emit("Start at login is not available on this platform")
+            self._status(
+                "status.start_login_unavailable",
+                "Start at login is not available on this platform",
+            )
             return
         settings = self._cfg.setdefault("settings", {})
         old_enabled = bool(settings.get("start_at_login", False))
@@ -1299,7 +1332,11 @@ class Backend(QObject):
             apply_login_startup(enabled)
         except Exception as exc:
             self.settingsChanged.emit()
-            self.statusMessage.emit(f"Failed to update login item: {exc}")
+            self._status(
+                "status.start_login_update_failed",
+                f"Failed to update login item: {exc}",
+                exc,
+            )
             return
         settings["start_at_login"] = enabled
         try:
@@ -1317,15 +1354,21 @@ class Backend(QObject):
                 )
             self.settingsChanged.emit()
             if rollback_error is not None:
-                self.statusMessage.emit(
-                    f"Start-at-login state is inconsistent; please restart {APP_NAME} to recover."
+                self._status(
+                    "status.start_login_inconsistent",
+                    f"Start-at-login state is inconsistent; please restart {APP_NAME} to recover.",
                 )
             else:
-                self.statusMessage.emit(f"Failed to save login item setting: {exc}")
+                self._status(
+                    "status.start_login_save_failed",
+                    f"Failed to save login item setting: {exc}",
+                    exc,
+                )
             return
         self.settingsChanged.emit()
-        self.statusMessage.emit(
-            "Start at login enabled" if enabled else "Start at login disabled"
+        self._status(
+            "status.start_login_enabled" if enabled else "status.start_login_disabled",
+            "Start at login enabled" if enabled else "Start at login disabled",
         )
 
     @Slot(int)
@@ -1486,32 +1529,41 @@ class Backend(QObject):
         app_spec = self._stored_profile_app_spec(entry, appId)
         label = entry.get("label", appId)
         if self._profile_has_app(app_spec):
-            self.statusMessage.emit("Profile already exists")
+            self._status("status.profile_exists", "Profile already exists")
             return
         safe_name = re.sub(r"[^a-z0-9_]", "_", label.lower())[:32].strip("_")
         self._cfg = create_profile(self._cfg, safe_name, label=label, apps=[app_spec])
         if self._engine:
             self._engine.cfg = self._cfg
         self.profilesChanged.emit()
-        self.statusMessage.emit("Profile created")
+        self._status("status.profile_created", "Profile created")
 
     @Slot()
     def browseForAppProfile(self):
         """Open a file picker, then create a profile for the selected app."""
         from PySide6.QtWidgets import QFileDialog
+        title = self._translate("dialog.select_application", "Select Application")
         if sys.platform == "darwin":
             path, _ = QFileDialog.getOpenFileName(
-                None, "Select Application", "/Applications", "Apps (*.app)")
+                None,
+                title,
+                "/Applications",
+                self._translate("dialog.apps_filter", "Apps (*.app)"),
+            )
         elif sys.platform == "linux":
             path, _ = QFileDialog.getOpenFileName(
-                None, "Select Application",
+                None,
+                title,
                 os.path.expanduser("~"),
-                "Applications (*)")
+                self._translate("dialog.applications_filter", "Applications (*)"),
+            )
         else:
             path, _ = QFileDialog.getOpenFileName(
-                None, "Select Application",
+                None,
+                title,
                 os.environ.get("ProgramFiles", "C:\\Program Files"),
-                "Executables (*.exe)")
+                self._translate("dialog.executables_filter", "Executables (*.exe)"),
+            )
         if not path:
             return
         if sys.platform == "linux":
@@ -1522,14 +1574,14 @@ class Backend(QObject):
         label = entry.get("label") if entry else os.path.splitext(os.path.basename(path))[0]
         app_spec = self._stored_profile_app_spec(entry, path) if entry else path
         if self._profile_has_app(app_spec):
-            self.statusMessage.emit("Profile already exists")
+            self._status("status.profile_exists", "Profile already exists")
             return
         safe_name = re.sub(r"[^a-z0-9_]", "_", label.lower())[:32].strip("_")
         self._cfg = create_profile(self._cfg, safe_name, label=label, apps=[app_spec])
         if self._engine:
             self._engine.cfg = self._cfg
         self.profilesChanged.emit()
-        self.statusMessage.emit("Profile created")
+        self._status("status.profile_created", "Profile created")
 
     @Slot()
     def refreshKnownAppsSilently(self):
@@ -1545,7 +1597,7 @@ class Backend(QObject):
             self._engine.cfg = self._cfg
             self._engine.reload_mappings()
         self.profilesChanged.emit()
-        self.statusMessage.emit("Profile deleted")
+        self._status("status.profile_deleted", "Profile deleted")
 
     @Slot(str, result=list)
     def getProfileMappings(self, profileName):
@@ -1671,11 +1723,11 @@ class Backend(QObject):
         normalized = (layoutKey or "").strip()
         device_key = self._connected_device_key
         if not self._mouse_connected or not device_key:
-            self.statusMessage.emit("Connect a device first")
+            self._status("status.connect_device_first", "Connect a device first")
             return
         valid_choices = {choice["key"] for choice in get_manual_layout_choices()}
         if normalized not in valid_choices:
-            self.statusMessage.emit("Unknown layout option")
+            self._status("status.unknown_layout", "Unknown layout option")
             return
 
         overrides = self._cfg.setdefault("settings", {}).setdefault(
@@ -1691,9 +1743,12 @@ class Backend(QObject):
         device = getattr(self._engine, "connected_device", None) if self._engine else None
         self._apply_device_layout(device)
         if normalized:
-            self.statusMessage.emit("Experimental layout applied")
+            self._status(
+                "status.experimental_layout_applied",
+                "Experimental layout applied",
+            )
         else:
-            self.statusMessage.emit("Layout reset to auto-detect")
+            self._status("status.layout_reset_auto", "Layout reset to auto-detect")
 
     # ── Engine thread callbacks (cross-thread safe) ────────────
 
@@ -1774,7 +1829,7 @@ class Backend(QObject):
         self.activeProfileChanged.emit()
         self.mappingsChanged.emit()
         self.profilesChanged.emit()
-        self.statusMessage.emit(f"Profile: {profile_name}")
+        self._status("status.profile_switched", f"Profile: {profile_name}", profile_name)
 
     @Slot(int)
     def _handleDpiRead(self, dpi):

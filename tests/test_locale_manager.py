@@ -1,9 +1,85 @@
 import unittest
 
-from ui.locale_manager import _TRANSLATIONS
+from ui.locale_manager import AVAILABLE_LANGUAGES, LocaleManager, _TRANSLATIONS
 
 
 class LocaleManagerTranslationTests(unittest.TestCase):
+    def test_default_language_is_english(self):
+        manager = LocaleManager()
+
+        self.assertEqual(manager.language, "en")
+        self.assertEqual(manager.tr("scroll.language"), "Language / \u8bed\u8a00")
+
+    def test_available_languages_are_english_and_simplified_chinese(self):
+        self.assertEqual(
+            AVAILABLE_LANGUAGES,
+            [
+                {"code": "en", "name": "English"},
+                {"code": "zh_CN", "name": "\u7b80\u4f53\u4e2d\u6587"},
+            ],
+        )
+
+    def test_saved_simplified_chinese_language_is_restored(self):
+        manager = LocaleManager("zh_CN")
+
+        self.assertEqual(manager.language, "zh_CN")
+        self.assertEqual(manager.tr("scroll.title"), "\u901a\u7528\u8bbe\u7f6e")
+
+    def test_unsupported_saved_language_falls_back_to_english(self):
+        manager = LocaleManager("zh_TW")
+
+        self.assertEqual(manager.language, "en")
+        self.assertEqual(manager.tr("scroll.title"), "General Settings")
+
+    def test_switching_to_chinese_updates_display_labels(self):
+        manager = LocaleManager()
+
+        manager.setLanguage("zh_CN")
+
+        self.assertEqual(manager.language, "zh_CN")
+        self.assertEqual(manager.tr("mouse.generic_mouse_mode"), "\u901a\u7528\u9f20\u6807\u6a21\u5f0f")
+        self.assertEqual(manager.tr("mouse.click_action"), "\u5355\u51fb\u64cd\u4f5c")
+        self.assertEqual(manager.tr("mouse.long_press_action"), "\u957f\u6309\u64cd\u4f5c")
+
+    def test_switching_back_to_english_restores_english_labels(self):
+        manager = LocaleManager("zh_CN")
+
+        manager.setLanguage("en")
+
+        self.assertEqual(manager.language, "en")
+        self.assertEqual(manager.tr("mouse.generic_mouse_mode"), "Generic Mouse Mode")
+        self.assertEqual(manager.tr("mouse.click_action"), "Click Action")
+        self.assertEqual(manager.tr("mouse.long_press_action"), "Long Press Action")
+
+    def test_generic_mouse_button_names_translate(self):
+        manager = LocaleManager("zh_CN")
+
+        self.assertEqual(manager.trButton("Middle Button"), "\u4e2d\u952e")
+        self.assertEqual(manager.trButton("Side Button 1"), "\u4fa7\u952e 1")
+        self.assertEqual(manager.trButton("Side Button 2"), "\u4fa7\u952e 2")
+
+    def test_action_display_names_translate_without_changing_inputs(self):
+        manager = LocaleManager("zh_CN")
+        cases = {
+            "Copy (Ctrl+C)": "\u590d\u5236 (Ctrl+C)",
+            "Paste (Ctrl+V)": "\u7c98\u8d34 (Ctrl+V)",
+            "Volume Mute": "\u9759\u97f3",
+            "Alt + Tab (Switch Windows)": "Alt + Tab\uff08\u5207\u6362\u7a97\u53e3\uff09",
+            "Screenshot Region \u2192 Clipboard": "\u533a\u57df\u622a\u56fe \u2192 \u526a\u8d34\u677f",
+            "Switch Scroll Mode (Ratchet / Free Spin)": "\u5207\u6362\u6eda\u8f6e\u6a21\u5f0f\uff08\u68d8\u8f6e / \u98de\u8f6e\uff09",
+        }
+
+        for english, translated in cases.items():
+            with self.subTest(english=english):
+                self.assertEqual(manager.trAction(english), translated)
+
+    def test_missing_translations_fall_back_safely(self):
+        manager = LocaleManager("zh_CN")
+
+        self.assertEqual(manager.tr("missing.key"), "missing.key")
+        self.assertEqual(manager.trButton("Unknown Button"), "Unknown Button")
+        self.assertEqual(manager.trAction("Custom App Action"), "Custom App Action")
+
     def test_key_capture_error_messages_exist_in_all_locales(self):
         required = {
             "key_capture.error.unsupported_key",
@@ -13,6 +89,7 @@ class LocaleManagerTranslationTests(unittest.TestCase):
             "key_capture.error.missing_main_key",
             "key_capture.error.empty_segment",
             "key_capture.error.unsupported",
+            "key_capture.error.invalid",
         }
 
         for locale, strings in _TRANSLATIONS.items():

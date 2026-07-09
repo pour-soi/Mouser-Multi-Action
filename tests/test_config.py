@@ -60,6 +60,7 @@ class ConfigMigrationTests(unittest.TestCase):
         self.assertTrue(migrated["settings"]["check_for_updates"])
         self.assertEqual(migrated["settings"]["update_check_state"], {})
         self.assertFalse(migrated["settings"]["start_at_login"])
+        self.assertEqual(migrated["settings"]["language"], "en")
         self.assertNotIn("start_with_windows", migrated["settings"])
         self.assertEqual(
             migrated["profiles"]["default"]["mappings"]["gesture"], "none"
@@ -170,6 +171,7 @@ class ConfigMigrationTests(unittest.TestCase):
         self.assertTrue(loaded["settings"]["check_for_updates"])
         self.assertEqual(loaded["settings"]["update_check_state"], {})
         self.assertFalse(loaded["settings"]["generic_mouse_enabled"])
+        self.assertEqual(loaded["settings"]["language"], "en")
         self.assertEqual(loaded["profiles"]["default"]["mappings"]["middle"], "copy")
         self.assertEqual(
             loaded["profiles"]["default"]["mappings"]["xbutton1"], "alt_tab"
@@ -193,6 +195,43 @@ class ConfigMigrationTests(unittest.TestCase):
             loaded["settings"]["multi_action_long_press_threshold_ms"],
             config.DEFAULT_LONG_PRESS_THRESHOLD_MS,
         )
+
+    def test_load_config_preserves_saved_language_and_mappings(self):
+        saved = {
+            "version": 11,
+            "active_profile": "default",
+            "profiles": {
+                "default": {
+                    "label": "Default",
+                    "apps": [],
+                    "mappings": {
+                        "middle": "copy",
+                        "generic_xbutton1": "browser_back",
+                        "generic_xbutton1_long": "paste",
+                    },
+                }
+            },
+            "settings": {
+                "language": "zh_CN",
+            },
+        }
+
+        with tempfile.TemporaryDirectory() as temp_dir:
+            config_file = Path(temp_dir) / "config.json"
+            config_file.write_text(json.dumps(saved), encoding="utf-8")
+
+            with (
+                patch.object(config, "CONFIG_DIR", temp_dir),
+                patch.object(config, "CONFIG_FILE", str(config_file)),
+            ):
+                loaded = config.load_config()
+
+        self.assertEqual(loaded["settings"]["language"], "zh_CN")
+        mappings = loaded["profiles"]["default"]["mappings"]
+        self.assertEqual(mappings["middle"], "copy")
+        self.assertEqual(mappings["generic_xbutton1"], "browser_back")
+        self.assertEqual(mappings["generic_xbutton1_long"], "paste")
+        self.assertEqual(mappings["generic_xbutton2"], "none")
 
     def test_migrate_renames_start_with_windows_to_start_at_login(self):
         legacy = {

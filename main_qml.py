@@ -1143,7 +1143,7 @@ def main():
 
     _t7 = _time.perf_counter()
     # ── QML Backend ────────────────────────────────────────────
-    backend = Backend(engine, root_dir=ROOT)
+    backend = Backend(engine, root_dir=ROOT, locale_manager=locale_mgr)
     ui_state.appearanceMode = backend.appearanceMode
     backend.settingsChanged.connect(
         lambda: setattr(ui_state, "appearanceMode", backend.appearanceMode)

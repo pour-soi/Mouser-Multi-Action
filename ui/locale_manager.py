@@ -1,6 +1,6 @@
 """
 Locale Manager — provides i18n support for the QML UI.
-Supports English (en), Simplified Chinese (zh_CN), and Traditional Chinese (zh_TW).
+Supports English (en) and Simplified Chinese (zh_CN).
 Exposed to QML as the context property `lm`.
 """
 
@@ -12,6 +12,7 @@ _TRANSLATIONS = {
         "nav.mouse_profiles": "Mouse & Profiles",
         "nav.point_scroll": "General",
         "nav.about": "About",
+        "nav.open_page": "Open %1",
 
         # Mouse page — profile list
         "mouse.profiles": "Profiles",
@@ -42,6 +43,13 @@ _TRANSLATIONS = {
         "mouse.auto_detect": "Auto-detect",
         "mouse.generic_mouse_mode": "Generic Mouse Mode",
         "mouse.generic_mouse_side_buttons": "Middle / Side Buttons",
+        "mouse.dpi_presets": "DPI Presets",
+        "mouse.dpi_slot": "Slot %1: %2 DPI",
+        "mouse.press_button_to_cycle": "Press the button to cycle: %1",
+        "mouse.source": "Source",
+        "mouse.not_available": "n/a",
+        "mouse.left_short": "L",
+        "mouse.right_short": "R",
 
         # Mouse page — action / mapping helpers
         "mouse.do_nothing": "Do Nothing",
@@ -54,6 +62,11 @@ _TRANSLATIONS = {
         "mouse.applications": "Applications",
         "mouse.system_applications": "System Applications",
         "mouse.macos_coreservices": "macOS CoreServices",
+        "mouse.share_device_details": "Help us support your mouse",
+        "mouse.copy_device_info": "Copy device info",
+        "mouse.device_info_copied": "Device info copied to clipboard.",
+        "mouse.device_info_copied_issue": "Device info copied to clipboard -- paste it into a GitHub issue!",
+        "mouse.no_device_connected": "No device connected",
 
         # Mouse page — action picker
         "mouse.choose_action_suffix": " \u2014 Choose Action",
@@ -186,7 +199,7 @@ _TRANSLATIONS = {
         "scroll.ignore_trackpad": "Ignore trackpad",
         "scroll.ignore_trackpad_desc": "Only respond to mouse events, not trackpad or Magic Mouse",
         "scroll.dpi_note": "DPI changes require HID++ communication with the device and will take effect after a short delay.",
-        "scroll.language": "Language",
+        "scroll.language": "Language / \u8bed\u8a00",
         "scroll.language_desc": "Choose the display language for the application.",
 
         # Key-capture dialog
@@ -201,6 +214,7 @@ _TRANSLATIONS = {
         "key_capture.error.missing_main_key": "Add a key, such as A, F5, or Page Down.",
         "key_capture.error.empty_segment": "Use + only between keys. Type plus for the + key.",
         "key_capture.error.unsupported": "Shortcut is not supported.",
+        "key_capture.error.invalid": "Invalid shortcut.",
         "key_capture.cancel": "Cancel",
         "key_capture.confirm": "Confirm",
 
@@ -215,6 +229,38 @@ _TRANSLATIONS = {
         "tray.update_available": "PourInput {version} is available. Open the release page to download it.",
         "tray.quit": "Quit PourInput",
         "tray.tray_message": "PourInput is running in the system tray. Click the icon to open settings.",
+
+        # Toast / status messages
+        "status.saved": "Saved",
+        "status.update_already_running": "Update is already in progress",
+        "status.checking_updates": "Checking for updates...",
+        "status.update_available": "PourInput %1 is available",
+        "status.up_to_date": "PourInput is up to date",
+        "status.check_updates_failed": "Could not check for updates",
+        "status.invalid_screenshot_folder": "Choose a valid screenshot folder",
+        "status.open_release_manual": "Open the release page to install manually",
+        "status.update_not_ready": "Update is not ready to install",
+        "status.start_login_unavailable": "Start at login is not available on this platform",
+        "status.start_login_update_failed": "Failed to update login item: %1",
+        "status.start_login_inconsistent": "Start-at-login state is inconsistent; please restart PourInput to recover.",
+        "status.start_login_save_failed": "Failed to save login item setting: %1",
+        "status.start_login_enabled": "Start at login enabled",
+        "status.start_login_disabled": "Start at login disabled",
+        "status.profile_exists": "Profile already exists",
+        "status.profile_created": "Profile created",
+        "status.profile_deleted": "Profile deleted",
+        "status.connect_device_first": "Connect a device first",
+        "status.unknown_layout": "Unknown layout option",
+        "status.experimental_layout_applied": "Experimental layout applied",
+        "status.layout_reset_auto": "Layout reset to auto-detect",
+        "status.profile_switched": "Profile: %1",
+
+        # Native dialog text
+        "dialog.choose_screenshot_folder": "Choose Screenshot Folder",
+        "dialog.select_application": "Select Application",
+        "dialog.apps_filter": "Apps (*.app)",
+        "dialog.applications_filter": "Applications (*)",
+        "dialog.executables_filter": "Executables (*.exe)",
 
         # Accessibility dialog (macOS)
         "accessibility.title": "Accessibility Permission Required",
@@ -251,6 +297,7 @@ _TRANSLATIONS = {
         "nav.mouse_profiles": "\u9f20\u6807\u4e0e\u914d\u7f6e\u6587\u4ef6",
         "nav.point_scroll": "\u901a\u7528",
         "nav.about": "\u5173\u4e8e",
+        "nav.open_page": "\u6253\u5f00 %1",
 
         "mouse.profiles": "\u914d\u7f6e\u6587\u4ef6",
         "mouse.all_applications": "\u6240\u6709\u5e94\u7528\u7a0b\u5e8f",
@@ -277,17 +324,29 @@ _TRANSLATIONS = {
         "mouse.auto_detect": "\u81ea\u52a8\u68c0\u6d4b",
         "mouse.generic_mouse_mode": "\u901a\u7528\u9f20\u6807\u6a21\u5f0f",
         "mouse.generic_mouse_side_buttons": "\u4e2d\u952e / \u4fa7\u952e",
+        "mouse.dpi_presets": "DPI \u9884\u8bbe",
+        "mouse.dpi_slot": "\u69fd\u4f4d %1\uff1a%2 DPI",
+        "mouse.press_button_to_cycle": "\u6309\u4e0b\u8be5\u6309\u952e\u5faa\u73af\u5207\u6362\uff1a%1",
+        "mouse.source": "\u6765\u6e90",
+        "mouse.not_available": "\u4e0d\u9002\u7528",
+        "mouse.left_short": "\u5de6",
+        "mouse.right_short": "\u53f3",
 
         "mouse.do_nothing": "\u65e0\u64cd\u4f5c",
         "mouse.horizontal_scroll": "\u6c34\u5e73\u6eda\u52a8",
-        "mouse.click_action": "\u70b9\u51fb\u52a8\u4f5c",
-        "mouse.long_press_action": "\u957f\u6309\u52a8\u4f5c",
+        "mouse.click_action": "\u5355\u51fb\u64cd\u4f5c",
+        "mouse.long_press_action": "\u957f\u6309\u64cd\u4f5c",
         "mouse.tap": "\u70b9\u51fb\uff1a",
         "mouse.swipes_configured": "\u5df2\u914d\u7f6e\u6ed1\u52a8",
         "mouse.installed_app": "\u5df2\u5b89\u88c5\u7684\u5e94\u7528",
         "mouse.applications": "\u5e94\u7528\u7a0b\u5e8f",
         "mouse.system_applications": "\u7cfb\u7edf\u5e94\u7528\u7a0b\u5e8f",
         "mouse.macos_coreservices": "macOS \u6838\u5fc3\u670d\u52a1",
+        "mouse.share_device_details": "\u5e2e\u52a9\u6211\u4eec\u652f\u6301\u60a8\u7684\u9f20\u6807",
+        "mouse.copy_device_info": "\u590d\u5236\u8bbe\u5907\u4fe1\u606f",
+        "mouse.device_info_copied": "\u8bbe\u5907\u4fe1\u606f\u5df2\u590d\u5236\u5230\u526a\u8d34\u677f\u3002",
+        "mouse.device_info_copied_issue": "\u8bbe\u5907\u4fe1\u606f\u5df2\u590d\u5236\u5230\u526a\u8d34\u677f\uff1b\u8bf7\u7c98\u8d34\u5230 GitHub issue \u4e2d\u3002",
+        "mouse.no_device_connected": "\u672a\u8fde\u63a5\u8bbe\u5907",
 
         "mouse.choose_action_suffix": " \u2014 \u9009\u62e9\u52a8\u4f5c",
         "mouse.configure_scroll_actions": "\u4e3a\u5411\u5de6\u548c\u5411\u53f3\u6eda\u52a8\u5206\u522b\u914d\u7f6e\u52a8\u4f5c",
@@ -415,7 +474,7 @@ _TRANSLATIONS = {
         "scroll.ignore_trackpad": "\u5ffd\u7565\u89e6\u6478\u677f",
         "scroll.ignore_trackpad_desc": "\u4ec5\u54cd\u5e94\u9f20\u6807\u4e8b\u4ef6\uff0c\u4e0d\u54cd\u5e94\u89e6\u6478\u677f\u6216 Magic Mouse",
         "scroll.dpi_note": "DPI \u66f4\u6539\u9700\u8981\u901a\u8fc7 HID++ \u4e0e\u8bbe\u5907\u901a\u4fe1\uff0c\u5c06\u5728\u77ed\u6682\u5ef6\u8fdf\u540e\u751f\u6548\u3002",
-        "scroll.language": "\u8bed\u8a00",
+        "scroll.language": "Language / \u8bed\u8a00",
         "scroll.language_desc": "\u9009\u62e9\u5e94\u7528\u7a0b\u5e8f\u7684\u663e\u793a\u8bed\u8a00\u3002",
 
         "key_capture.title": "\u81ea\u5b9a\u4e49\u5feb\u6377\u952e",
@@ -429,6 +488,7 @@ _TRANSLATIONS = {
         "key_capture.error.missing_main_key": "\u8bf7\u6dfb\u52a0\u4e00\u4e2a\u6309\u952e\uff0c\u4f8b\u5982 A\u3001F5 \u6216 Page Down\u3002",
         "key_capture.error.empty_segment": "+ \u53ea\u7528\u4e8e\u5206\u9694\u6309\u952e\uff1b\u5982\u9700\u8f93\u5165\u52a0\u53f7\uff0c\u8bf7\u8f93\u5165 plus\u3002",
         "key_capture.error.unsupported": "\u65e0\u6cd5\u4f7f\u7528\u8fd9\u4e2a\u5feb\u6377\u952e\u3002",
+        "key_capture.error.invalid": "\u65e0\u6548\u7684\u5feb\u6377\u952e\u3002",
         "key_capture.cancel": "\u53d6\u6d88",
         "key_capture.confirm": "\u786e\u8ba4",
 
@@ -442,6 +502,36 @@ _TRANSLATIONS = {
         "tray.update_available": "PourInput {version} \u53ef\u7528\u3002\u8bf7\u6253\u5f00\u53d1\u5e03\u9875\u9762\u624b\u52a8\u4e0b\u8f7d\u3002",
         "tray.quit": "\u9000\u51fa PourInput",
         "tray.tray_message": "PourInput \u6b63\u5728\u7cfb\u7edf\u6258\u76d8\u4e2d\u8fd0\u884c\u3002\u70b9\u51fb\u56fe\u6807\u6253\u5f00\u8bbe\u7f6e\u3002",
+
+        "status.saved": "\u5df2\u4fdd\u5b58",
+        "status.update_already_running": "\u66f4\u65b0\u5df2\u5728\u8fdb\u884c\u4e2d",
+        "status.checking_updates": "\u6b63\u5728\u68c0\u67e5\u66f4\u65b0...",
+        "status.update_available": "PourInput %1 \u53ef\u7528",
+        "status.up_to_date": "PourInput \u5df2\u662f\u6700\u65b0\u7248\u672c",
+        "status.check_updates_failed": "\u65e0\u6cd5\u68c0\u67e5\u66f4\u65b0",
+        "status.invalid_screenshot_folder": "\u8bf7\u9009\u62e9\u6709\u6548\u7684\u622a\u56fe\u6587\u4ef6\u5939",
+        "status.open_release_manual": "\u8bf7\u6253\u5f00\u53d1\u5e03\u9875\u624b\u52a8\u5b89\u88c5",
+        "status.update_not_ready": "\u66f4\u65b0\u5c1a\u672a\u51c6\u5907\u597d",
+        "status.start_login_unavailable": "\u6b64\u5e73\u53f0\u4e0d\u652f\u6301\u767b\u5f55\u65f6\u542f\u52a8",
+        "status.start_login_update_failed": "\u66f4\u65b0\u767b\u5f55\u9879\u5931\u8d25\uff1a%1",
+        "status.start_login_inconsistent": "\u767b\u5f55\u542f\u52a8\u72b6\u6001\u4e0d\u4e00\u81f4\uff1b\u8bf7\u91cd\u542f PourInput \u4ee5\u6062\u590d\u3002",
+        "status.start_login_save_failed": "\u4fdd\u5b58\u767b\u5f55\u9879\u8bbe\u7f6e\u5931\u8d25\uff1a%1",
+        "status.start_login_enabled": "\u5df2\u542f\u7528\u767b\u5f55\u65f6\u542f\u52a8",
+        "status.start_login_disabled": "\u5df2\u5173\u95ed\u767b\u5f55\u65f6\u542f\u52a8",
+        "status.profile_exists": "\u914d\u7f6e\u6587\u4ef6\u5df2\u5b58\u5728",
+        "status.profile_created": "\u914d\u7f6e\u6587\u4ef6\u5df2\u521b\u5efa",
+        "status.profile_deleted": "\u914d\u7f6e\u6587\u4ef6\u5df2\u5220\u9664",
+        "status.connect_device_first": "\u8bf7\u5148\u8fde\u63a5\u8bbe\u5907",
+        "status.unknown_layout": "\u672a\u77e5\u5e03\u5c40\u9009\u9879",
+        "status.experimental_layout_applied": "\u5df2\u5e94\u7528\u5b9e\u9a8c\u6027\u5e03\u5c40",
+        "status.layout_reset_auto": "\u5df2\u91cd\u7f6e\u4e3a\u81ea\u52a8\u68c0\u6d4b",
+        "status.profile_switched": "\u914d\u7f6e\u6587\u4ef6\uff1a%1",
+
+        "dialog.choose_screenshot_folder": "\u9009\u62e9\u622a\u56fe\u6587\u4ef6\u5939",
+        "dialog.select_application": "\u9009\u62e9\u5e94\u7528\u7a0b\u5e8f",
+        "dialog.apps_filter": "\u5e94\u7528 (*.app)",
+        "dialog.applications_filter": "\u5e94\u7528\u7a0b\u5e8f (*)",
+        "dialog.executables_filter": "\u53ef\u6267\u884c\u6587\u4ef6 (*.exe)",
 
         "accessibility.title": "\u9700\u8981\u8f85\u52a9\u529f\u80fd\u6743\u9650",
         "accessibility.text": (
@@ -651,6 +741,7 @@ _TRANSLATIONS = {
         "key_capture.error.missing_main_key": "\u8acb\u52a0\u5165\u4e00\u500b\u6309\u9375\uff0c\u4f8b\u5982 A\u3001F5 \u6216 Page Down\u3002",
         "key_capture.error.empty_segment": "+ \u53ea\u7528\u65bc\u5206\u9694\u6309\u9375\uff1b\u5982\u9700\u8f38\u5165\u52a0\u865f\uff0c\u8acb\u8f38\u5165 plus\u3002",
         "key_capture.error.unsupported": "\u7121\u6cd5\u4f7f\u7528\u6b64\u5feb\u901f\u9375\u3002",
+        "key_capture.error.invalid": "\u7121\u6548\u7684\u5feb\u901f\u9375\u3002",
         "key_capture.cancel": "\u53d6\u6d88",
         "key_capture.confirm": "\u78ba\u8a8d",
 
@@ -691,10 +782,11 @@ _TRANSLATIONS = {
     },
 }
 
+_SUPPORTED_LANGUAGE_CODES = {"en", "zh_CN"}
+
 AVAILABLE_LANGUAGES = [
     {"code": "en",    "name": "English"},
     {"code": "zh_CN", "name": "\u7b80\u4f53\u4e2d\u6587"},
-    {"code": "zh_TW", "name": "\u7e41\u9ad4\u4e2d\u6587"},
 ]
 
 # ── Button name translations ──────────────────────────────────────────────────
@@ -932,7 +1024,7 @@ class LocaleManager(QObject):
 
     def __init__(self, language: str = "en", parent=None):
         super().__init__(parent)
-        lang = language if language in _TRANSLATIONS else "en"
+        lang = language if language in _SUPPORTED_LANGUAGE_CODES else "en"
         self._language = lang
         self._strings: dict = dict(_TRANSLATIONS[lang])
 
@@ -945,7 +1037,7 @@ class LocaleManager(QObject):
     def setLanguage(self, lang: str) -> None:
         if lang == self._language:
             return
-        if lang not in _TRANSLATIONS:
+        if lang not in _SUPPORTED_LANGUAGE_CODES:
             return
         self._language = lang
         self._strings = dict(_TRANSLATIONS[lang])

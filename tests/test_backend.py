@@ -15,8 +15,10 @@ from core.updater import UpdateCheckState
 try:
     from PySide6.QtCore import QCoreApplication, Qt, QUrl
     from ui.backend import Backend
+    from ui.locale_manager import LocaleManager
 except ModuleNotFoundError:
     Backend = None
+    LocaleManager = None
     QCoreApplication = None
     Qt = None
     QUrl = None
@@ -167,14 +169,18 @@ class _FakeAppDetector:
 
 @unittest.skipIf(Backend is None, "PySide6 not installed in test environment")
 class BackendDeviceLayoutTests(unittest.TestCase):
-    def _make_backend(self, engine=None, root_dir=None, cfg=None):
+    def _make_backend(self, engine=None, root_dir=None, cfg=None, locale_manager=None):
         loaded_config = copy.deepcopy(cfg or DEFAULT_CONFIG)
         with (
             patch("ui.backend.load_config", return_value=loaded_config),
             patch("ui.backend.save_config"),
             patch("ui.backend.supports_login_startup", return_value=False),
         ):
-            return Backend(engine=engine, root_dir=root_dir)
+            return Backend(
+                engine=engine,
+                root_dir=root_dir,
+                locale_manager=locale_manager,
+            )
 
     @staticmethod
     def _fake_create_profile(cfg, name, label=None, copy_from="default", apps=None):
@@ -929,6 +935,30 @@ class BackendDeviceLayoutTests(unittest.TestCase):
         self.assertTrue(backend._cfg["settings"]["generic_mouse_enabled"])
         self.assertEqual(engine.reload_count, 1)
         save_config.assert_called_once_with(backend._cfg)
+
+    def test_localized_mapping_status_does_not_translate_mapping_data(self):
+        engine = _FakeEngine()
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["language"] = "zh_CN"
+        locale_manager = LocaleManager(cfg["settings"]["language"])
+        backend = self._make_backend(
+            engine=engine,
+            cfg=cfg,
+            locale_manager=locale_manager,
+        )
+        statuses = []
+        backend.statusMessage.connect(statuses.append)
+
+        backend.setMapping("middle", "copy")
+        backend.setProfileMapping("default", "generic_xbutton1", "paste")
+
+        mappings = backend._cfg["profiles"]["default"]["mappings"]
+        self.assertEqual(statuses, ["\u5df2\u4fdd\u5b58", "\u5df2\u4fdd\u5b58"])
+        self.assertEqual(mappings["middle"], "copy")
+        self.assertEqual(mappings["generic_xbutton1"], "paste")
+        self.assertEqual(mappings["xbutton1"], "alt_tab")
+        self.assertIn("generic_xbutton1_long", mappings)
+        self.assertEqual(engine.reload_count, 2)
 
     def test_generic_mouse_toggle_clears_live_xbutton_hook_state(self):
         from core.engine import Engine

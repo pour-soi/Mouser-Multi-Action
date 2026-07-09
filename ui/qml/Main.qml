@@ -118,7 +118,8 @@ ApplicationWindow {
 
                             Accessible.role: Accessible.Button
                             Accessible.name: lm.strings[modelData.tipKey] || modelData.tipKey
-                            Accessible.description: "Open " + (lm.strings[modelData.tipKey] || modelData.tipKey)
+                            Accessible.description: (lm.strings["nav.open_page"] || "Open %1")
+                                                    .replace("%1", lm.strings[modelData.tipKey] || modelData.tipKey)
 
                             Keys.onReturnPressed: root.openPage(modelData.page)
                             Keys.onEnterPressed: root.openPage(modelData.page)
@@ -202,7 +203,8 @@ ApplicationWindow {
 
                     Accessible.role: Accessible.Button
                     Accessible.name: lm.strings["nav.about"] || "About"
-                    Accessible.description: "Open " + (lm.strings["nav.about"] || "About")
+                    Accessible.description: (lm.strings["nav.open_page"] || "Open %1")
+                                            .replace("%1", lm.strings["nav.about"] || "About")
 
                     Keys.onReturnPressed: aboutDialog.open()
                     Keys.onEnterPressed: aboutDialog.open()

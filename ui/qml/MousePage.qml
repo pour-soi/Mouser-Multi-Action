@@ -476,7 +476,9 @@ Item {
         if (hotspot.summaryType === "gesture")
             return gestureSummary()
         if (hotspot.summaryType === "hscroll")
-            return "L: " + lm.trAction(hscrollLeftActionLabel) + " | R: " + lm.trAction(hscrollRightActionLabel)
+            return (s["mouse.left_short"] || "L") + ": " + lm.trAction(hscrollLeftActionLabel)
+                   + " | " + (s["mouse.right_short"] || "R") + ": "
+                   + lm.trAction(hscrollRightActionLabel)
         return actionFor(hotspot.buttonKey)
     }
 
@@ -941,7 +943,7 @@ Item {
                                         text: {
                                             if (backend.deviceLayoutOverrideKey !== "")
                                                 return currentLayoutChoiceLabel()
-                                            return backend.deviceDisplayName || "Auto"
+                                            return backend.deviceDisplayName || (s["mouse.auto_detect"] || "Auto-detect")
                                         }
                                         font { family: uiState.fontFamily; pixelSize: 10 }
                                         color: backend.deviceLayoutOverrideKey !== ""
@@ -1764,7 +1766,7 @@ Item {
                                     spacing: 14
 
                                     Text {
-                                        text: "DPI PRESETS"
+                                        text: s["mouse.dpi_presets"] || "DPI Presets"
                                         font { family: uiState.fontFamily; pixelSize: 11;
                                                capitalization: Font.AllUppercase; letterSpacing: 1 }
                                         color: theme.textDim
@@ -1833,8 +1835,9 @@ Item {
                                                 anchors.verticalCenter: parent.verticalCenter
                                             }
                                             Text {
-                                                text: "Slot " + (dpiPresetsCard.activeSlot + 1) + ": "
-                                                      + Math.round(dpiPresetSlider.value) + " DPI"
+                                                text: (s["mouse.dpi_slot"] || "Slot %1: %2 DPI")
+                                                      .replace("%1", dpiPresetsCard.activeSlot + 1)
+                                                      .replace("%2", Math.round(dpiPresetSlider.value))
                                                 font { family: uiState.fontFamily; pixelSize: 12; bold: true }
                                                 color: dpiPresetsCard.slotColors[dpiPresetsCard.activeSlot]
                                             }
@@ -1884,14 +1887,14 @@ Item {
                                     Text {
                                         width: parent.width
                                         wrapMode: Text.WordWrap
-                                        text: "Press the button to cycle: "
-                                              + (function() {
+                                        text: (s["mouse.press_button_to_cycle"] || "Press the button to cycle: %1")
+                                              .replace("%1", (function() {
                                                   var p = backend.dpiPresets
                                                   var parts = []
                                                   for (var i = 0; i < p.length; i++)
                                                       parts.push(p[i])
                                                   return parts.join(" \u2192 ")
-                                              })()
+                                              })())
                                         font { family: uiState.fontFamily; pixelSize: 11 }
                                         color: theme.textSecondary
                                     }
@@ -2084,7 +2087,7 @@ Item {
                                     Text {
                                         id: copyDevInfoText
                                         anchors.centerIn: parent
-                                        text: "Copy device info"
+                                        text: s["mouse.copy_device_info"] || "Copy device info"
                                         font { family: uiState.fontFamily; pixelSize: 11; bold: true }
                                         color: theme.textPrimary
                                     }
@@ -2098,9 +2101,9 @@ Item {
                                             var info = backend.dumpDeviceInfo()
                                             if (info) {
                                                 backend.copyToClipboard(info)
-                                                backend.statusMessage("Device info copied to clipboard")
+                                                backend.statusMessage(s["mouse.device_info_copied"] || "Device info copied to clipboard")
                                             } else {
-                                                backend.statusMessage("No device connected")
+                                                backend.statusMessage(s["mouse.no_device_connected"] || "No device connected")
                                             }
                                         }
                                     }
@@ -2166,8 +2169,8 @@ Item {
                                     }
 
                                     Text {
-                                        text: "Source: "
-                                              + (backend.gestureMoveSource ? backend.gestureMoveSource : "n/a")
+                                        text: (s["mouse.source"] || "Source") + ": "
+                                              + (backend.gestureMoveSource ? backend.gestureMoveSource : (s["mouse.not_available"] || "n/a"))
                                               + " | dx: " + backend.gestureMoveDx
                                               + " | dy: " + backend.gestureMoveDy
                                         font { family: "Menlo"; pixelSize: 11 }
