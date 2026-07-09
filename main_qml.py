@@ -16,6 +16,7 @@ import signal
 import hashlib
 import getpass
 import time
+import atexit
 from urllib.parse import parse_qs, unquote
 
 # Ensure project root on path -- works for both normal Python and PyInstaller.
@@ -97,6 +98,8 @@ def _print_startup_times():
 
 LINUX_DESKTOP_FILE_BASENAME = "io.github.pour_soi.pourinput"
 WINDOWS_APP_USER_MODEL_ID = "pour-soi.PourInput"
+_WINDOWS_SINGLE_INSTANCE_MUTEX_HANDLE = None
+_WINDOWS_ERROR_ALREADY_EXISTS = 183
 
 
 def _parse_cli_args(argv):
@@ -137,6 +140,59 @@ def _single_instance_server_name() -> str:
     raw = f"{getpass.getuser()}\0{sys.platform}"
     digest = hashlib.sha256(raw.encode("utf-8", errors="replace")).hexdigest()[:16]
     return f"POURINPUT_instance_{digest}"
+
+
+def _windows_single_instance_mutex_name() -> str:
+    raw = f"{getpass.getuser()}\0{WINDOWS_APP_USER_MODEL_ID}"
+    digest = hashlib.sha256(raw.encode("utf-8", errors="replace")).hexdigest()[:16]
+    return f"Local\\PourInput_{digest}"
+
+
+def _release_windows_single_instance_mutex():
+    global _WINDOWS_SINGLE_INSTANCE_MUTEX_HANDLE
+    handle = _WINDOWS_SINGLE_INSTANCE_MUTEX_HANDLE
+    if not handle:
+        return
+    try:
+        import ctypes
+
+        ctypes.windll.kernel32.CloseHandle(handle)
+    except Exception:
+        pass
+    _WINDOWS_SINGLE_INSTANCE_MUTEX_HANDLE = None
+
+
+def _acquire_windows_single_instance_mutex() -> bool:
+    if sys.platform != "win32":
+        return True
+    global _WINDOWS_SINGLE_INSTANCE_MUTEX_HANDLE
+    if _WINDOWS_SINGLE_INSTANCE_MUTEX_HANDLE:
+        return True
+    try:
+        import ctypes
+
+        kernel32 = ctypes.windll.kernel32
+        kernel32.CreateMutexW.argtypes = [ctypes.c_void_p, ctypes.c_bool, ctypes.c_wchar_p]
+        kernel32.CreateMutexW.restype = ctypes.c_void_p
+        kernel32.GetLastError.restype = ctypes.c_ulong
+        handle = kernel32.CreateMutexW(
+            None,
+            False,
+            _windows_single_instance_mutex_name(),
+        )
+        if not handle:
+            print("[PourInput] Windows single-instance mutex could not be created.")
+            return True
+        if kernel32.GetLastError() == _WINDOWS_ERROR_ALREADY_EXISTS:
+            kernel32.CloseHandle(handle)
+            print("[PourInput] Another PourInput instance is already running; exiting.")
+            return False
+        _WINDOWS_SINGLE_INSTANCE_MUTEX_HANDLE = handle
+        atexit.register(_release_windows_single_instance_mutex)
+        return True
+    except Exception as exc:
+        print(f"[PourInput] Windows single-instance mutex unavailable: {exc}")
+        return True
 
 
 def _try_activate_existing_instance(server_name: str, timeout_ms: int = 500) -> bool:
@@ -1030,6 +1086,9 @@ def main():
             set_hid_backend_preference(hid_backend)
         except ValueError as exc:
             raise SystemExit(f"Invalid --hid-backend setting: {exc}") from exc
+
+    if not _acquire_windows_single_instance_mutex():
+        return 0
 
     # Also: also mutate the bundle's display name keys so
     # surfaces that read from `[NSBundle mainBundle]` (application menu

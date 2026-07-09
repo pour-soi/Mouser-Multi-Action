@@ -1,6 +1,8 @@
 import sys
+import ctypes
 import unittest
 import uuid
+from types import SimpleNamespace
 from unittest.mock import MagicMock, patch
 
 try:
@@ -31,6 +33,16 @@ class SingleInstanceServerNameTests(unittest.TestCase):
         self.assertEqual(len(a), len("POURINPUT_instance_") + 16)
 
 
+class _FakeWinFunc:
+    def __init__(self, func):
+        self._func = func
+        self.argtypes = None
+        self.restype = None
+
+    def __call__(self, *args):
+        return self._func(*args)
+
+
 @unittest.skipIf(main_qml is None, "main_qml / PySide6 not available")
 class TryActivateExistingTests(unittest.TestCase):
     @patch("main_qml.QLocalSocket")
@@ -51,6 +63,59 @@ class TryActivateExistingTests(unittest.TestCase):
         sock.connectToServer.assert_called_once_with("pipe_name")
         sock.write.assert_called_once_with(main_qml._SINGLE_INSTANCE_ACTIVATE_MSG)
         sock.disconnectFromServer.assert_called_once()
+
+
+@unittest.skipIf(main_qml is None, "main_qml / PySide6 not available")
+class WindowsSingleInstanceMutexTests(unittest.TestCase):
+    def setUp(self):
+        main_qml._WINDOWS_SINGLE_INSTANCE_MUTEX_HANDLE = None
+
+    def tearDown(self):
+        main_qml._WINDOWS_SINGLE_INSTANCE_MUTEX_HANDLE = None
+
+    def _fake_windll(self, *, handle=100, last_error=0):
+        close_handle = MagicMock()
+        kernel32 = SimpleNamespace(
+            CreateMutexW=_FakeWinFunc(lambda *_args: handle),
+            GetLastError=_FakeWinFunc(lambda: last_error),
+            CloseHandle=_FakeWinFunc(close_handle),
+        )
+        return SimpleNamespace(kernel32=kernel32), close_handle
+
+    def test_non_windows_mutex_noops(self):
+        with patch.object(main_qml.sys, "platform", "linux"):
+            self.assertTrue(main_qml._acquire_windows_single_instance_mutex())
+
+    def test_windows_mutex_records_primary_handle(self):
+        windll, close_handle = self._fake_windll(handle=123, last_error=0)
+
+        with (
+            patch.object(main_qml.sys, "platform", "win32"),
+            patch.object(ctypes, "windll", windll, create=True),
+            patch.object(main_qml.atexit, "register") as register,
+        ):
+            self.assertTrue(main_qml._acquire_windows_single_instance_mutex())
+
+        self.assertEqual(main_qml._WINDOWS_SINGLE_INSTANCE_MUTEX_HANDLE, 123)
+        close_handle.assert_not_called()
+        register.assert_called_once_with(main_qml._release_windows_single_instance_mutex)
+
+    def test_windows_mutex_rejects_existing_instance(self):
+        windll, close_handle = self._fake_windll(
+            handle=456,
+            last_error=main_qml._WINDOWS_ERROR_ALREADY_EXISTS,
+        )
+
+        with (
+            patch.object(main_qml.sys, "platform", "win32"),
+            patch.object(ctypes, "windll", windll, create=True),
+            patch.object(main_qml.atexit, "register") as register,
+        ):
+            self.assertFalse(main_qml._acquire_windows_single_instance_mutex())
+
+        self.assertIsNone(main_qml._WINDOWS_SINGLE_INSTANCE_MUTEX_HANDLE)
+        close_handle.assert_called_once_with(456)
+        register.assert_not_called()
 
 
 @unittest.skipIf(main_qml is None, "main_qml / PySide6 not available")

@@ -43,7 +43,7 @@ class ConfigMigrationTests(unittest.TestCase):
 
         migrated = config._migrate(legacy)
 
-        self.assertEqual(migrated["version"], 10)
+        self.assertEqual(migrated["version"], 11)
         self.assertEqual(migrated["profiles"]["default"]["apps"], [])
         self.assertFalse(migrated["settings"]["invert_hscroll"])
         self.assertFalse(migrated["settings"]["invert_vscroll"])
@@ -83,6 +83,15 @@ class ConfigMigrationTests(unittest.TestCase):
             "none",
         )
         self.assertEqual(
+            migrated["profiles"]["default"]["mappings"]["generic_xbutton1"],
+            "none",
+        )
+        self.assertEqual(
+            migrated["profiles"]["default"]["mappings"]["generic_xbutton1_long"],
+            "none",
+        )
+        self.assertFalse(migrated["settings"]["generic_mouse_enabled"])
+        self.assertEqual(
             migrated["settings"]["multi_action_long_press_threshold_ms"],
             config.DEFAULT_LONG_PRESS_THRESHOLD_MS,
         )
@@ -101,7 +110,7 @@ class ConfigMigrationTests(unittest.TestCase):
 
         migrated = config._migrate(cfg)
 
-        self.assertEqual(migrated["version"], 10)
+        self.assertEqual(migrated["version"], 11)
         self.assertEqual(
             migrated["profiles"]["media"]["apps"],
             ["Microsoft.Media.Player.exe", "VLC.exe"],
@@ -113,6 +122,7 @@ class ConfigMigrationTests(unittest.TestCase):
         self.assertEqual(migrated["settings"]["screenshot_directory"], "")
         self.assertTrue(migrated["settings"]["check_for_updates"])
         self.assertEqual(migrated["settings"]["update_check_state"], {})
+        self.assertFalse(migrated["settings"]["generic_mouse_enabled"])
         self.assertFalse(migrated["settings"]["start_at_login"])
         self.assertNotIn("start_with_windows", migrated["settings"])
 
@@ -144,7 +154,7 @@ class ConfigMigrationTests(unittest.TestCase):
             ):
                 loaded = config.load_config()
 
-        self.assertEqual(loaded["version"], 10)
+        self.assertEqual(loaded["version"], 11)
         self.assertEqual(loaded["settings"]["dpi"], 800)
         self.assertFalse(loaded["settings"]["start_at_login"])
         self.assertEqual(loaded["settings"]["gesture_threshold"], 50)
@@ -155,6 +165,7 @@ class ConfigMigrationTests(unittest.TestCase):
         self.assertEqual(loaded["settings"]["screenshot_directory"], "")
         self.assertTrue(loaded["settings"]["check_for_updates"])
         self.assertEqual(loaded["settings"]["update_check_state"], {})
+        self.assertFalse(loaded["settings"]["generic_mouse_enabled"])
         self.assertEqual(loaded["profiles"]["default"]["mappings"]["middle"], "copy")
         self.assertEqual(
             loaded["profiles"]["default"]["mappings"]["xbutton1"], "alt_tab"
@@ -165,6 +176,14 @@ class ConfigMigrationTests(unittest.TestCase):
         self.assertEqual(
             loaded["profiles"]["default"]["mappings"]["mode_shift_long"],
             "switch_scroll_mode",
+        )
+        self.assertEqual(
+            loaded["profiles"]["default"]["mappings"]["generic_xbutton2"],
+            "none",
+        )
+        self.assertEqual(
+            loaded["profiles"]["default"]["mappings"]["generic_xbutton2_long"],
+            "none",
         )
         self.assertEqual(
             loaded["settings"]["multi_action_long_press_threshold_ms"],
@@ -180,7 +199,7 @@ class ConfigMigrationTests(unittest.TestCase):
 
         migrated = config._migrate(legacy)
 
-        self.assertEqual(migrated["version"], 10)
+        self.assertEqual(migrated["version"], 11)
         self.assertTrue(migrated["settings"]["start_at_login"])
         self.assertEqual(
             migrated["profiles"]["default"]["mappings"]["mode_shift"],

@@ -4,6 +4,7 @@ current configuration.  Sits between the hook layer and the UI.
 Supports per-application auto-switching of profiles.
 """
 
+import sys
 import threading
 import time
 from core.mouse_hook import MouseHook, MouseEvent
@@ -14,6 +15,7 @@ from core.key_simulator import (
 from core.config import (
     load_config, get_active_mappings, get_profile_for_app,
     BUTTON_TO_EVENTS, DEFAULT_LONG_PRESS_THRESHOLD_MS,
+    GENERIC_MOUSE_BUTTONS,
     GESTURE_DIRECTION_BUTTONS, save_config,
     long_press_mapping_key, supports_multi_action,
 )
@@ -29,6 +31,7 @@ from core.logi_devices import clamp_dpi, get_reprogrammable_buttons
 HSCROLL_ACTION_COOLDOWN_S = 0.35
 HSCROLL_VOLUME_COOLDOWN_S = 0.06
 _VOLUME_ACTIONS = {"volume_up", "volume_down"}
+_WINDOWS_XBUTTON_KEYS = {"xbutton1", "xbutton2"}
 
 
 class Engine:
@@ -101,6 +104,7 @@ class Engine:
     def _setup_hooks(self):
         """Register callbacks and block events for all mapped buttons."""
         mappings = get_active_mappings(self.cfg)
+        generic_mouse_enabled = self._generic_mouse_enabled()
 
         # Apply scroll inversion settings to the hook
         settings = self.cfg.get("settings", {})
@@ -155,6 +159,13 @@ class Engine:
 
         for btn_key, action_id in mappings.items():
             if btn_key.endswith("_long"):
+                continue
+            if btn_key in GENERIC_MOUSE_BUTTONS:
+                if not generic_mouse_enabled:
+                    continue
+            elif generic_mouse_enabled and btn_key in _WINDOWS_XBUTTON_KEYS:
+                continue
+            elif not self._should_bind_physical_xbutton(btn_key, device_buttons):
                 continue
             if btn_key.startswith("gesture") and not device_supports_gesture:
                 continue
@@ -214,6 +225,18 @@ class Engine:
                             self.hook.register(evt_type, self._make_handler(action_id))
                     else:
                         self.hook.register(evt_type, self._make_handler(action_id))
+
+    def _generic_mouse_enabled(self):
+        if sys.platform != "win32":
+            return False
+        return bool(self.cfg.get("settings", {}).get("generic_mouse_enabled", False))
+
+    def _should_bind_physical_xbutton(self, button_key, device_buttons):
+        if button_key not in _WINDOWS_XBUTTON_KEYS:
+            return True
+        if sys.platform != "win32":
+            return True
+        return False
 
     def _execute_mapped_action(self, action_id, event_type=None):
         if action_id == "none":
@@ -751,6 +774,10 @@ class Engine:
                 self._battery_poll_thread.join(timeout=5)
                 self._battery_poll_thread = None
         self._last_hid_features_ready = hid_features_ready
+        if connection_changed or hid_features_changed:
+            with self._lock:
+                self.hook.reset_bindings()
+                self._setup_hooks()
         if self._connection_change_cb:
             try:
                 self._connection_change_cb(connected)

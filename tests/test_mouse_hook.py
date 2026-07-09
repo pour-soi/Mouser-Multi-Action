@@ -1,4 +1,5 @@
 import importlib
+import ctypes
 import queue
 import sys
 import unittest
@@ -147,6 +148,123 @@ class BaseMouseHookDispatchQueueTests(unittest.TestCase):
 
         hook._debug_callback.assert_called_once()
         self.assertIn("Dropped event due to full dispatch queue", hook._debug_callback.call_args[0][0])
+
+
+@unittest.skipUnless(sys.platform == "win32", "Windows-only low-level hook tests")
+class WindowsXButtonHookTests(unittest.TestCase):
+    def _windows_module(self):
+        return importlib.import_module("core.mouse_hook_windows")
+
+    def _event_pointer(self, module, *, mouse_data=0, flags=0):
+        data = module.MSLLHOOKSTRUCT()
+        data.mouseData = mouse_data
+        data.flags = flags
+        return ctypes.pointer(data)
+
+    def _xbutton_pointer(self, module, xbutton):
+        return self._event_pointer(module, mouse_data=xbutton << 16)
+
+    def test_xbutton1_down_up_are_enqueued_and_pass_through_by_default(self):
+        module = self._windows_module()
+        hook = module.MouseHook()
+
+        with patch.object(module, "CallNextHookEx", return_value=123):
+            down_result = hook._low_level_handler_inner(
+                module.HC_ACTION,
+                module.WM_XBUTTONDOWN,
+                self._xbutton_pointer(module, module.XBUTTON1),
+            )
+            up_result = hook._low_level_handler_inner(
+                module.HC_ACTION,
+                module.WM_XBUTTONUP,
+                self._xbutton_pointer(module, module.XBUTTON1),
+            )
+
+        self.assertEqual(down_result, 123)
+        self.assertEqual(up_result, 123)
+        down_event = hook._dispatch_queue.get_nowait()
+        up_event = hook._dispatch_queue.get_nowait()
+        self.assertEqual(
+            [down_event.event_type, up_event.event_type],
+            [
+                module.MouseEvent.XBUTTON1_DOWN,
+                module.MouseEvent.XBUTTON1_UP,
+            ],
+        )
+
+    def test_xbutton2_down_up_are_enqueued_and_pass_through_by_default(self):
+        module = self._windows_module()
+        hook = module.MouseHook()
+
+        with patch.object(module, "CallNextHookEx", return_value=123):
+            down_result = hook._low_level_handler_inner(
+                module.HC_ACTION,
+                module.WM_XBUTTONDOWN,
+                self._xbutton_pointer(module, module.XBUTTON2),
+            )
+            up_result = hook._low_level_handler_inner(
+                module.HC_ACTION,
+                module.WM_XBUTTONUP,
+                self._xbutton_pointer(module, module.XBUTTON2),
+            )
+
+        self.assertEqual(down_result, 123)
+        self.assertEqual(up_result, 123)
+        down_event = hook._dispatch_queue.get_nowait()
+        up_event = hook._dispatch_queue.get_nowait()
+        self.assertEqual(
+            [down_event.event_type, up_event.event_type],
+            [
+                module.MouseEvent.XBUTTON2_DOWN,
+                module.MouseEvent.XBUTTON2_UP,
+            ],
+        )
+
+    def test_blocking_xbutton_does_not_suppress_unrelated_mouse_events(self):
+        module = self._windows_module()
+        hook = module.MouseHook()
+        hook.block(module.MouseEvent.XBUTTON1_DOWN)
+
+        with patch.object(module, "CallNextHookEx", return_value=123):
+            xbutton_result = hook._low_level_handler_inner(
+                module.HC_ACTION,
+                module.WM_XBUTTONDOWN,
+                self._xbutton_pointer(module, module.XBUTTON1),
+            )
+            middle_result = hook._low_level_handler_inner(
+                module.HC_ACTION,
+                module.WM_MBUTTONDOWN,
+                self._event_pointer(module),
+            )
+            left_result = hook._low_level_handler_inner(
+                module.HC_ACTION,
+                0x0201,
+                self._event_pointer(module),
+            )
+            wheel_result = hook._low_level_handler_inner(
+                module.HC_ACTION,
+                module.WM_MOUSEWHEEL,
+                self._event_pointer(module),
+            )
+
+        self.assertEqual(xbutton_result, 1)
+        self.assertEqual(middle_result, 123)
+        self.assertEqual(left_result, 123)
+        self.assertEqual(wheel_result, 123)
+
+    def test_existing_xbutton_blocking_still_works(self):
+        module = self._windows_module()
+        hook = module.MouseHook()
+        hook.block(module.MouseEvent.XBUTTON2_UP)
+
+        with patch.object(module, "CallNextHookEx", return_value=123):
+            result = hook._low_level_handler_inner(
+                module.HC_ACTION,
+                module.WM_XBUTTONUP,
+                self._xbutton_pointer(module, module.XBUTTON2),
+            )
+
+        self.assertEqual(result, 1)
 
 
 class LinuxMouseHookReconnectTests(unittest.TestCase):

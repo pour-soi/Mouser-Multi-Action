@@ -21,6 +21,7 @@ class _FakeMouseHook:
         self.sync_hid_extra_diverts_calls = 0
         self.blocked_events = []
         self.registered_events = []
+        self.callbacks = {}
 
     def set_debug_callback(self, cb):
         self._debug_callback = cb
@@ -42,10 +43,12 @@ class _FakeMouseHook:
 
     def register(self, event_type, callback):
         self.registered_events.append(event_type)
+        self.callbacks.setdefault(event_type, []).append(callback)
 
     def reset_bindings(self):
         self.blocked_events = []
         self.registered_events = []
+        self.callbacks = {}
 
     def sync_hid_extra_diverts(self):
         self.sync_hid_extra_diverts_calls += 1
@@ -200,7 +203,10 @@ class EngineHorizontalScrollTests(unittest.TestCase):
             capability_inventory=SimpleNamespace(has_reprog_controls=True),
         )
 
-        with patch("core.engine.load_config", return_value=engine.cfg):
+        with (
+            patch("core.engine.load_config", return_value=engine.cfg),
+            patch("core.engine.sys.platform", "linux"),
+        ):
             engine.reload_mappings()
 
         self.assertTrue(engine.hook._gesture_config["enabled"])
@@ -214,7 +220,10 @@ class EngineHorizontalScrollTests(unittest.TestCase):
             capability_inventory=SimpleNamespace(has_reprog_controls=True),
         )
 
-        with patch("core.engine.load_config", return_value=engine.cfg):
+        with (
+            patch("core.engine.load_config", return_value=engine.cfg),
+            patch("core.engine.sys.platform", "linux"),
+        ):
             engine.reload_mappings()
 
         self.assertFalse(engine.hook._gesture_config["enabled"])
@@ -237,6 +246,7 @@ class EngineHorizontalScrollTests(unittest.TestCase):
     def test_button_capabilities_drive_multi_action_registration(self):
         engine = self._make_engine()
         engine.cfg["profiles"]["default"]["mappings"]["xbutton1_long"] = "copy"
+        engine.hook.device_connected = True
         engine.hook.connected_device = SimpleNamespace(
             supported_buttons=("middle",),
             capabilities=SimpleNamespace(
@@ -251,8 +261,189 @@ class EngineHorizontalScrollTests(unittest.TestCase):
         self.assertTrue(engine.hook.divert_mode_shift)
         self.assertIn(MouseEvent.MODE_SHIFT_DOWN, engine.hook.registered_events)
         self.assertIn(MouseEvent.MODE_SHIFT_UP, engine.hook.registered_events)
-        self.assertIn(MouseEvent.XBUTTON1_DOWN, engine.hook.registered_events)
-        self.assertIn(MouseEvent.XBUTTON1_UP, engine.hook.registered_events)
+
+    def test_generic_mouse_disable_runtime_clears_xbutton_management(self):
+        from core.engine import Engine
+
+        cfg_enabled = copy.deepcopy(DEFAULT_CONFIG)
+        cfg_enabled["settings"]["generic_mouse_enabled"] = True
+        cfg_enabled["profiles"]["default"]["mappings"]["generic_xbutton1"] = "browser_back"
+        cfg_enabled["profiles"]["default"]["mappings"]["generic_xbutton1_long"] = "copy"
+
+        cfg_disabled = copy.deepcopy(cfg_enabled)
+        cfg_disabled["settings"]["generic_mouse_enabled"] = False
+
+        with (
+            patch("core.engine.MouseHook", _FakeMouseHook),
+            patch("core.engine.AppDetector", _FakeAppDetector),
+            patch("core.engine.load_config", return_value=cfg_enabled),
+            patch("core.engine.sys.platform", "win32"),
+        ):
+            engine = Engine()
+
+        self.assertEqual(
+            engine.hook.registered_events.count(MouseEvent.XBUTTON1_DOWN),
+            1,
+        )
+        self.assertEqual(
+            engine.hook.registered_events.count(MouseEvent.XBUTTON1_UP),
+            1,
+        )
+        self.assertIn(MouseEvent.XBUTTON1_DOWN, engine.hook.blocked_events)
+        self.assertIn(MouseEvent.XBUTTON1_UP, engine.hook.blocked_events)
+
+        with (
+            patch("core.engine.load_config", return_value=cfg_disabled),
+            patch("core.engine.sys.platform", "win32"),
+        ):
+            engine.reload_mappings()
+
+        self.assertNotIn(MouseEvent.XBUTTON1_DOWN, engine.hook.registered_events)
+        self.assertNotIn(MouseEvent.XBUTTON1_UP, engine.hook.registered_events)
+        self.assertNotIn(MouseEvent.XBUTTON1_DOWN, engine.hook.blocked_events)
+        self.assertNotIn(MouseEvent.XBUTTON1_UP, engine.hook.blocked_events)
+        self.assertNotIn(MouseEvent.XBUTTON1_DOWN, engine.hook.callbacks)
+        self.assertNotIn(MouseEvent.XBUTTON1_UP, engine.hook.callbacks)
+
+        with (
+            patch("core.engine.load_config", return_value=cfg_enabled),
+            patch("core.engine.sys.platform", "win32"),
+        ):
+            engine.reload_mappings()
+
+        self.assertEqual(
+            engine.hook.registered_events.count(MouseEvent.XBUTTON1_DOWN),
+            1,
+        )
+        self.assertEqual(
+            engine.hook.registered_events.count(MouseEvent.XBUTTON1_UP),
+            1,
+        )
+        self.assertIn(MouseEvent.XBUTTON1_DOWN, engine.hook.blocked_events)
+        self.assertIn(MouseEvent.XBUTTON1_UP, engine.hook.blocked_events)
+        self.assertEqual(len(engine.hook.callbacks[MouseEvent.XBUTTON1_DOWN]), 1)
+        self.assertEqual(len(engine.hook.callbacks[MouseEvent.XBUTTON1_UP]), 1)
+
+    def test_physical_xbutton_mapping_is_not_bound_on_windows_without_device_identity(self):
+        engine = self._make_engine()
+        engine.hook.device_connected = True
+        engine.hook.connected_device = SimpleNamespace(
+            supported_buttons=("middle", "xbutton1", "xbutton2"),
+            capabilities=SimpleNamespace(
+                reprogrammable_buttons=("middle", "xbutton1", "xbutton2"),
+            ),
+            capability_inventory=SimpleNamespace(has_reprog_controls=True),
+        )
+
+        with (
+            patch("core.engine.load_config", return_value=engine.cfg),
+            patch("core.engine.sys.platform", "win32"),
+        ):
+            engine.reload_mappings()
+
+        self.assertNotIn(MouseEvent.XBUTTON1_DOWN, engine.hook.registered_events)
+        self.assertNotIn(MouseEvent.XBUTTON2_DOWN, engine.hook.registered_events)
+        self.assertNotIn(MouseEvent.XBUTTON1_DOWN, engine.hook.blocked_events)
+        self.assertNotIn(MouseEvent.XBUTTON2_DOWN, engine.hook.blocked_events)
+
+    def test_generic_mouse_mode_uses_generic_side_button_mappings_only(self):
+        from core.engine import Engine
+
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["generic_mouse_enabled"] = True
+        cfg["profiles"]["default"]["mappings"]["generic_xbutton1"] = "browser_back"
+        cfg["profiles"]["default"]["mappings"]["generic_xbutton1_long"] = "copy"
+
+        with (
+            patch("core.engine.MouseHook", _FakeMouseHook),
+            patch("core.engine.AppDetector", _FakeAppDetector),
+            patch("core.engine.load_config", return_value=cfg),
+            patch("core.engine.sys.platform", "win32"),
+        ):
+            engine = Engine()
+
+        self.assertEqual(
+            engine.hook.registered_events.count(MouseEvent.XBUTTON1_DOWN),
+            1,
+        )
+        self.assertEqual(
+            engine.hook.registered_events.count(MouseEvent.XBUTTON1_UP),
+            1,
+        )
+        self.assertNotIn(MouseEvent.XBUTTON2_DOWN, engine.hook.registered_events)
+        self.assertNotIn(MouseEvent.XBUTTON2_UP, engine.hook.registered_events)
+        self.assertIn(MouseEvent.XBUTTON1_DOWN, engine.hook.blocked_events)
+        self.assertIn(MouseEvent.XBUTTON1_UP, engine.hook.blocked_events)
+        self.assertNotIn(MouseEvent.XBUTTON2_DOWN, engine.hook.blocked_events)
+
+    def test_generic_mouse_mode_passes_through_unmanaged_side_buttons(self):
+        from core.engine import Engine
+
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["generic_mouse_enabled"] = True
+
+        with (
+            patch("core.engine.MouseHook", _FakeMouseHook),
+            patch("core.engine.AppDetector", _FakeAppDetector),
+            patch("core.engine.load_config", return_value=cfg),
+            patch("core.engine.sys.platform", "win32"),
+        ):
+            engine = Engine()
+
+        self.assertNotIn(MouseEvent.XBUTTON1_DOWN, engine.hook.registered_events)
+        self.assertNotIn(MouseEvent.XBUTTON1_UP, engine.hook.registered_events)
+        self.assertNotIn(MouseEvent.XBUTTON2_DOWN, engine.hook.registered_events)
+        self.assertNotIn(MouseEvent.XBUTTON2_UP, engine.hook.registered_events)
+        self.assertNotIn(MouseEvent.XBUTTON1_DOWN, engine.hook.blocked_events)
+        self.assertNotIn(MouseEvent.XBUTTON2_DOWN, engine.hook.blocked_events)
+
+    def test_generic_mouse_click_dispatches_existing_action_handler(self):
+        from core.engine import Engine
+
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["generic_mouse_enabled"] = True
+        cfg["profiles"]["default"]["mappings"]["generic_xbutton2"] = "browser_forward"
+
+        with (
+            patch("core.engine.MouseHook", _FakeMouseHook),
+            patch("core.engine.AppDetector", _FakeAppDetector),
+            patch("core.engine.load_config", return_value=cfg),
+            patch("core.engine.sys.platform", "win32"),
+        ):
+            engine = Engine()
+
+        handler = engine.hook.callbacks[MouseEvent.XBUTTON2_DOWN][0]
+        with patch("core.engine.execute_action") as execute_action_mock:
+            handler(SimpleNamespace(event_type=MouseEvent.XBUTTON2_DOWN))
+
+        execute_action_mock.assert_called_once_with("browser_forward")
+
+    def test_generic_mouse_long_press_reuses_multi_action_timing(self):
+        from core.engine import Engine
+
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["generic_mouse_enabled"] = True
+        cfg["profiles"]["default"]["mappings"]["generic_xbutton1"] = "browser_back"
+        cfg["profiles"]["default"]["mappings"]["generic_xbutton1_long"] = "copy"
+
+        with (
+            patch("core.engine.MouseHook", _FakeMouseHook),
+            patch("core.engine.AppDetector", _FakeAppDetector),
+            patch("core.engine.load_config", return_value=cfg),
+            patch("core.engine.sys.platform", "win32"),
+        ):
+            engine = Engine()
+
+        down = engine.hook.callbacks[MouseEvent.XBUTTON1_DOWN][0]
+        up = engine.hook.callbacks[MouseEvent.XBUTTON1_UP][0]
+        with (
+            patch("core.engine.time.monotonic", side_effect=[10.000, 10.300]),
+            patch("core.engine.execute_action") as execute_action_mock,
+        ):
+            down(SimpleNamespace(event_type=MouseEvent.XBUTTON1_DOWN))
+            up(SimpleNamespace(event_type=MouseEvent.XBUTTON1_UP))
+
+        execute_action_mock.assert_called_once_with("copy")
 
     def test_reload_mappings_syncs_live_hid_extra_diverts(self):
         engine = self._make_engine()

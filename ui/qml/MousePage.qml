@@ -15,6 +15,7 @@ Item {
     readonly property bool hasBlockingDialog: addAppDialog.visible
                                              || deleteDialog.visible
                                              || keyCaptureDialog.visible
+    readonly property bool canConfigureMouse: backend.mouseConnected || backend.genericMouseEnabled
     property string pendingDeleteProfile: ""
     // Reactive i18n shortcut — all s["key"] bindings update on lm.languageChanged
     property var s: lm.strings
@@ -780,7 +781,7 @@ Item {
                                 }
 
                                 Text {
-                                    text: !backend.mouseConnected
+                                    text: !canConfigureMouse
                                           ? s["mouse.turn_on_mouse"]
                                           : backend.hasInteractiveDeviceLayout
                                             ? s["mouse.click_dot"]
@@ -994,6 +995,49 @@ Item {
                     }
 
                     // ── Mouse image with hotspots ─────────────
+                    Rectangle {
+                        visible: backend.isWindows
+                        width: parent.width - 56
+                        anchors.horizontalCenter: parent.horizontalCenter
+                        height: 56
+                        radius: 14
+                        color: theme.bgCard
+                        border.width: 1
+                        border.color: theme.border
+
+                        RowLayout {
+                            anchors.fill: parent
+                            anchors.leftMargin: 16
+                            anchors.rightMargin: 16
+                            spacing: 12
+
+                            Column {
+                                Layout.fillWidth: true
+                                spacing: 3
+
+                                Text {
+                                    text: s["mouse.generic_mouse_mode"] || "Generic Mouse Mode"
+                                    font { family: uiState.fontFamily; pixelSize: 13; bold: true }
+                                    color: theme.textPrimary
+                                }
+
+                                Text {
+                                    text: s["mouse.generic_mouse_side_buttons"] || "XBUTTON1 / XBUTTON2"
+                                    font { family: uiState.fontFamily; pixelSize: 11 }
+                                    color: theme.textSecondary
+                                }
+                            }
+
+                            Switch {
+                                checked: backend.genericMouseEnabled
+                                text: checked ? s["mouse.on"] : s["mouse.off"]
+                                Material.accent: theme.accent
+                                Accessible.name: s["mouse.generic_mouse_mode"] || "Generic Mouse Mode"
+                                onClicked: backend.setGenericMouseEnabled(checked)
+                            }
+                        }
+                    }
+
                     Item {
                         id: mouseImageArea
                         width: parent.width
@@ -1011,7 +1055,7 @@ Item {
                             width: backend.deviceImageWidth
                             height: backend.deviceImageHeight
                             anchors.centerIn: parent
-                            visible: backend.mouseConnected
+                            visible: canConfigureMouse
                             smooth: true
                             mipmap: true
                             asynchronous: true
@@ -1022,7 +1066,7 @@ Item {
                         }
 
                         Rectangle {
-                            visible: !backend.mouseConnected
+                            visible: !canConfigureMouse
                             width: Math.min(parent.width - 120, 760)
                             height: emptyStateCol.implicitHeight + 52
                             radius: 24
@@ -1142,7 +1186,7 @@ Item {
                         }
 
                         Rectangle {
-                            visible: backend.mouseConnected && !backend.hasInteractiveDeviceLayout
+                            visible: canConfigureMouse && !backend.hasInteractiveDeviceLayout
                             width: Math.min(420, parent.width - 48)
                             height: fallbackCol.implicitHeight + 32
                             radius: 16

@@ -8,6 +8,8 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from core.config import DEFAULT_CONFIG
+from core.mouse_hook import MouseEvent
+from core.mouse_hook_types import HidRuntimeState
 from core.updater import UpdateCheckState
 
 try:
@@ -49,6 +51,7 @@ class _FakeEngine:
         self.debug_enabled = None
         self.start_count = 0
         self.stop_count = 0
+        self.reload_count = 0
         self.start_error = None
 
     def set_profile_change_callback(self, cb):
@@ -82,6 +85,84 @@ class _FakeEngine:
 
     def stop(self):
         self.stop_count += 1
+
+    def reload_mappings(self):
+        self.reload_count += 1
+
+
+class _InspectableMouseHook:
+    def __init__(self):
+        self.invert_vscroll = False
+        self.invert_hscroll = False
+        self.debug_mode = False
+        self.device_connected = True
+        self.connected_device = SimpleNamespace(
+            supported_buttons=("middle", "xbutton1", "xbutton2"),
+            capabilities=SimpleNamespace(
+                reprogrammable_buttons=("middle", "xbutton1", "xbutton2"),
+            ),
+            capability_inventory=SimpleNamespace(has_reprog_controls=True),
+        )
+        self._hid_gesture = None
+        self._callbacks = {}
+        self._blocked_events = set()
+        self.divert_mode_shift = False
+        self.divert_dpi_switch = False
+        self.sync_hid_extra_diverts_calls = 0
+
+    @property
+    def hid_runtime_state(self):
+        return HidRuntimeState(
+            input_ready=self.device_connected,
+            hid_ready=False,
+            connected_device=self.connected_device,
+        )
+
+    def set_debug_callback(self, cb):
+        self._debug_callback = cb
+
+    def set_gesture_callback(self, cb):
+        self._gesture_callback = cb
+
+    def set_status_callback(self, cb):
+        self._status_callback = cb
+
+    def set_connection_change_callback(self, cb):
+        self._connection_change_callback = cb
+
+    def configure_gestures(self, **kwargs):
+        self._gesture_config = kwargs
+
+    def block(self, event_type):
+        self._blocked_events.add(event_type)
+
+    def register(self, event_type, callback):
+        self._callbacks.setdefault(event_type, []).append(callback)
+
+    def reset_bindings(self):
+        self._blocked_events.clear()
+        self._callbacks.clear()
+
+    def sync_hid_extra_diverts(self):
+        self.sync_hid_extra_diverts_calls += 1
+        return True
+
+    def start(self):
+        return True
+
+    def stop(self):
+        return None
+
+
+class _FakeAppDetector:
+    def __init__(self, callback):
+        self.callback = callback
+
+    def start(self):
+        return None
+
+    def stop(self):
+        return None
 
 
 @unittest.skipIf(Backend is None, "PySide6 not installed in test environment")
@@ -761,6 +842,106 @@ class BackendDeviceLayoutTests(unittest.TestCase):
                 button["supportsMultiAction"],
                 button["key"] in ("xbutton1", "xbutton2"),
             )
+
+    def test_generic_mouse_mode_exposes_side_buttons_without_logitech_connection(self):
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["generic_mouse_enabled"] = True
+
+        with patch("ui.backend.sys.platform", "win32"):
+            backend = self._make_backend(cfg=cfg)
+
+        button_keys = [button["key"] for button in backend.buttons]
+        self.assertEqual(button_keys, ["generic_xbutton1", "generic_xbutton2"])
+        for button in backend.buttons:
+            self.assertTrue(button["supportsMultiAction"])
+            self.assertEqual(button["actionId"], "none")
+            self.assertEqual(button["longActionId"], "none")
+
+        mapping_keys = [
+            mapping["key"] for mapping in backend.getProfileMappings("default")
+        ]
+        self.assertEqual(mapping_keys, ["generic_xbutton1", "generic_xbutton2"])
+
+    def test_set_generic_mouse_enabled_persists_and_reloads_mappings(self):
+        engine = _FakeEngine()
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+
+        with (
+            patch("ui.backend.load_config", return_value=cfg),
+            patch("ui.backend.save_config") as save_config,
+            patch("ui.backend.supports_login_startup", return_value=False),
+            patch("ui.backend.sys.platform", "win32"),
+        ):
+            backend = Backend(engine=engine)
+            backend.setGenericMouseEnabled(True)
+            self.assertTrue(backend.genericMouseEnabled)
+
+        self.assertTrue(backend._cfg["settings"]["generic_mouse_enabled"])
+        self.assertEqual(engine.reload_count, 1)
+        save_config.assert_called_once_with(backend._cfg)
+
+    def test_generic_mouse_toggle_clears_live_xbutton_hook_state(self):
+        from core.engine import Engine
+
+        persisted = copy.deepcopy(DEFAULT_CONFIG)
+        persisted["settings"]["generic_mouse_enabled"] = True
+        persisted["profiles"]["default"]["mappings"]["generic_xbutton1"] = "browser_back"
+        persisted["profiles"]["default"]["mappings"]["generic_xbutton1_long"] = "copy"
+
+        def load_persisted():
+            return copy.deepcopy(persisted)
+
+        def save_persisted(updated):
+            nonlocal persisted
+            persisted = copy.deepcopy(updated)
+
+        with (
+            patch("ui.backend.load_config", side_effect=load_persisted),
+            patch("ui.backend.save_config", side_effect=save_persisted),
+            patch("ui.backend.supports_login_startup", return_value=False),
+            patch("ui.backend.sys.platform", "win32"),
+            patch("core.engine.load_config", side_effect=load_persisted),
+            patch("core.engine.MouseHook", _InspectableMouseHook),
+            patch("core.engine.AppDetector", _FakeAppDetector),
+            patch("core.engine.sys.platform", "win32"),
+        ):
+            engine = Engine()
+            backend = Backend(engine=engine)
+
+            self.assertTrue(engine.cfg["settings"]["generic_mouse_enabled"])
+            self.assertIn(MouseEvent.XBUTTON1_DOWN, engine.hook._callbacks)
+            self.assertIn(MouseEvent.XBUTTON1_UP, engine.hook._callbacks)
+            self.assertIn(MouseEvent.XBUTTON1_DOWN, engine.hook._blocked_events)
+            self.assertIn(MouseEvent.XBUTTON1_UP, engine.hook._blocked_events)
+
+            backend.setGenericMouseEnabled(False)
+
+            self.assertFalse(persisted["settings"]["generic_mouse_enabled"])
+            self.assertFalse(engine.cfg["settings"]["generic_mouse_enabled"])
+            self.assertEqual(engine.cfg["profiles"]["default"]["mappings"]["xbutton1"], "alt_tab")
+            self.assertEqual(
+                engine.cfg["profiles"]["default"]["mappings"]["generic_xbutton1"],
+                "browser_back",
+            )
+            self.assertNotIn(MouseEvent.XBUTTON1_DOWN, engine.hook._callbacks)
+            self.assertNotIn(MouseEvent.XBUTTON1_UP, engine.hook._callbacks)
+            self.assertNotIn(MouseEvent.XBUTTON2_DOWN, engine.hook._callbacks)
+            self.assertNotIn(MouseEvent.XBUTTON2_UP, engine.hook._callbacks)
+            self.assertNotIn(MouseEvent.XBUTTON1_DOWN, engine.hook._blocked_events)
+            self.assertNotIn(MouseEvent.XBUTTON1_UP, engine.hook._blocked_events)
+            self.assertNotIn(MouseEvent.XBUTTON2_DOWN, engine.hook._blocked_events)
+            self.assertNotIn(MouseEvent.XBUTTON2_UP, engine.hook._blocked_events)
+
+            backend.setGenericMouseEnabled(True)
+
+            self.assertTrue(persisted["settings"]["generic_mouse_enabled"])
+            self.assertTrue(engine.cfg["settings"]["generic_mouse_enabled"])
+            self.assertIn(MouseEvent.XBUTTON1_DOWN, engine.hook._callbacks)
+            self.assertIn(MouseEvent.XBUTTON1_UP, engine.hook._callbacks)
+            self.assertIn(MouseEvent.XBUTTON1_DOWN, engine.hook._blocked_events)
+            self.assertIn(MouseEvent.XBUTTON1_UP, engine.hook._blocked_events)
+            self.assertEqual(len(engine.hook._callbacks[MouseEvent.XBUTTON1_DOWN]), 1)
+            self.assertEqual(len(engine.hook._callbacks[MouseEvent.XBUTTON1_UP]), 1)
 
     def test_disconnect_clears_stale_linux_device_identity_and_layout(self):
         device = SimpleNamespace(

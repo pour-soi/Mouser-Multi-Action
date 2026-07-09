@@ -20,6 +20,7 @@ from PySide6.QtCore import QCoreApplication, QMetaObject, QObject, Property, QTi
 from core.accessibility import is_process_trusted
 from core.config import (
     BUTTON_NAMES, load_config, save_config, get_active_mappings,
+    GENERIC_MOUSE_BUTTON_NAMES, GENERIC_MOUSE_BUTTONS,
     PROFILE_BUTTON_NAMES, set_mapping, create_profile, delete_profile,
     get_icon_for_exe, long_press_mapping_key, supports_multi_action,
 )
@@ -373,12 +374,11 @@ class Backend(QObject):
     def buttons(self):
         """List of button dicts for the active profile, filtered by device."""
         mappings = get_active_mappings(self._cfg)
-        device_buttons = set(
-            self._effective_supported_buttons or BUTTON_NAMES.keys()
-        )
+        button_names = self._visible_button_names(include_profile_buttons=False)
+        device_buttons = self._visible_button_keys(button_names.keys())
         result = []
         idx = 0
-        for key, name in BUTTON_NAMES.items():
+        for key, name in button_names.items():
             if key not in device_buttons:
                 continue
             aid = mappings.get(key, "none")
@@ -545,6 +545,10 @@ class Backend(QObject):
     @Property(bool, notify=settingsChanged)
     def debugMode(self):
         return bool(self._cfg.get("settings", {}).get("debug_mode", False))
+
+    @Property(bool, notify=settingsChanged)
+    def genericMouseEnabled(self):
+        return self._generic_mouse_enabled()
 
     @Property(bool, notify=settingsChanged)
     def checkForUpdates(self):
@@ -1165,6 +1169,24 @@ class Backend(QObject):
         self._configureUpdateChecks()
         self.statusMessage.emit("Saved")
 
+    @Slot(bool)
+    def setGenericMouseEnabled(self, value):
+        if sys.platform != "win32":
+            return
+        enabled = bool(value)
+        settings = self._cfg.setdefault("settings", {})
+        if bool(settings.get("generic_mouse_enabled", False)) == enabled:
+            return
+        settings["generic_mouse_enabled"] = enabled
+        save_config(self._cfg)
+        if self._engine:
+            self._engine.cfg = self._cfg
+            self._engine.reload_mappings()
+        self.settingsChanged.emit()
+        self.mappingsChanged.emit()
+        self.deviceLayoutChanged.emit()
+        self.statusMessage.emit("Saved")
+
     @Slot()
     def chooseScreenshotDirectory(self):
         from PySide6.QtWidgets import QFileDialog
@@ -1531,11 +1553,10 @@ class Backend(QObject):
         profiles = self._cfg.get("profiles", {})
         pdata = profiles.get(profileName, {})
         mappings = pdata.get("mappings", {})
-        device_buttons = set(
-            self._effective_supported_buttons or PROFILE_BUTTON_NAMES.keys()
-        )
+        button_names = self._visible_button_names(include_profile_buttons=True)
+        device_buttons = self._visible_button_keys(button_names.keys())
         result = []
-        for key, name in PROFILE_BUTTON_NAMES.items():
+        for key, name in button_names.items():
             if key not in device_buttons:
                 continue
             aid = mappings.get(key, "none")
@@ -1599,6 +1620,30 @@ class Backend(QObject):
             return pretty_key_name(name, platform_name=sys.platform)
         except ShortcutParseError:
             return name
+
+    def _generic_mouse_enabled(self):
+        return (
+            sys.platform == "win32"
+            and bool(self._cfg.get("settings", {}).get("generic_mouse_enabled", False))
+        )
+
+    def _visible_button_names(self, *, include_profile_buttons):
+        base = PROFILE_BUTTON_NAMES if include_profile_buttons else BUTTON_NAMES
+        names = dict(base)
+        if self._generic_mouse_enabled():
+            names.update(GENERIC_MOUSE_BUTTON_NAMES)
+        else:
+            for key in GENERIC_MOUSE_BUTTONS:
+                names.pop(key, None)
+        return names
+
+    def _visible_button_keys(self, default_keys):
+        if not self._generic_mouse_enabled():
+            return set(self._effective_supported_buttons or default_keys)
+        buttons = set(self._effective_supported_buttons or ())
+        buttons.difference_update({"xbutton1", "xbutton2"})
+        buttons.update(GENERIC_MOUSE_BUTTONS)
+        return buttons
 
     @Slot(result=str)
     def dumpDeviceInfo(self):

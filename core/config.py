@@ -46,12 +46,20 @@ MULTI_ACTION_BUTTONS = (
     "mode_shift",
     "xbutton1",
     "xbutton2",
+    "generic_xbutton1",
+    "generic_xbutton2",
 )
 LONG_PRESS_SUFFIX = "_long"
 DEFAULT_LONG_PRESS_THRESHOLD_MS = 300
+GENERIC_MOUSE_BUTTON_NAMES = {
+    "generic_xbutton1": "Generic XBUTTON1",
+    "generic_xbutton2": "Generic XBUTTON2",
+}
+GENERIC_MOUSE_BUTTONS = tuple(GENERIC_MOUSE_BUTTON_NAMES)
 
 PROFILE_BUTTON_NAMES = {
     **BUTTON_NAMES,
+    **GENERIC_MOUSE_BUTTON_NAMES,
     "gesture_left":  "Gesture swipe left",
     "gesture_right": "Gesture swipe right",
     "gesture_up":    "Gesture swipe up",
@@ -68,6 +76,8 @@ BUTTON_TO_EVENTS = {
     "gesture_down":  ("gesture_swipe_down",),
     "xbutton1":      ("xbutton1_down", "xbutton1_up"),
     "xbutton2":      ("xbutton2_down", "xbutton2_up"),
+    "generic_xbutton1": ("xbutton1_down", "xbutton1_up"),
+    "generic_xbutton2": ("xbutton2_down", "xbutton2_up"),
     "hscroll_left":  ("hscroll_left",),
     "hscroll_right": ("hscroll_right",),
     "mode_shift":    ("mode_shift_down", "mode_shift_up"),
@@ -83,7 +93,7 @@ def supports_multi_action(button):
     return button in MULTI_ACTION_BUTTONS
 
 DEFAULT_CONFIG = {
-    "version": 10,
+    "version": 11,
     "active_profile": "default",
     "profiles": {
         "default": {
@@ -104,6 +114,10 @@ DEFAULT_CONFIG = {
                 "mode_shift_long": "switch_scroll_mode",
                 "xbutton1_long": "none",
                 "xbutton2_long": "none",
+                "generic_xbutton1": "none",
+                "generic_xbutton2": "none",
+                "generic_xbutton1_long": "none",
+                "generic_xbutton2_long": "none",
             },
         }
     },
@@ -122,6 +136,7 @@ DEFAULT_CONFIG = {
         "gesture_timeout_ms": 3000,
         "gesture_cooldown_ms": 500,
         "multi_action_long_press_threshold_ms": DEFAULT_LONG_PRESS_THRESHOLD_MS,
+        "generic_mouse_enabled": False,
         "appearance_mode": "system",
         "debug_mode": False,
         "device_layout_overrides": {},
@@ -363,6 +378,16 @@ def _migrate(cfg):
             mappings.setdefault("xbutton2_long", "none")
         cfg["version"] = 10
 
+    if version < 11:
+        settings = cfg.setdefault("settings", {})
+        settings.setdefault("generic_mouse_enabled", False)
+        for pdata in cfg.get("profiles", {}).values():
+            mappings = pdata.setdefault("mappings", {})
+            for button in GENERIC_MOUSE_BUTTONS:
+                mappings.setdefault(button, "none")
+                mappings.setdefault(long_press_mapping_key(button), "none")
+        cfg["version"] = 11
+
     cfg.setdefault("settings", {})
     cfg["settings"].setdefault("appearance_mode", "system")
     cfg["settings"].setdefault("debug_mode", False)
@@ -372,6 +397,7 @@ def _migrate(cfg):
     cfg["settings"].setdefault("screenshot_directory", "")
     cfg["settings"].setdefault("check_for_updates", True)
     cfg["settings"].setdefault("update_check_state", {})
+    cfg["settings"].setdefault("generic_mouse_enabled", False)
     cfg["settings"].setdefault(
         "multi_action_long_press_threshold_ms",
         DEFAULT_LONG_PRESS_THRESHOLD_MS,
@@ -381,6 +407,10 @@ def _migrate(cfg):
         mappings = pdata.setdefault("mappings", {})
         for button in MULTI_ACTION_BUTTONS:
             long_key = long_press_mapping_key(button)
+            mappings.setdefault(
+                button,
+                DEFAULT_CONFIG["profiles"]["default"]["mappings"].get(button, "none"),
+            )
             mappings.setdefault(
                 long_key,
                 DEFAULT_CONFIG["profiles"]["default"]["mappings"].get(long_key, "none"),

@@ -40,6 +40,8 @@ _TRANSLATIONS = {
         "mouse.experimental_override_suffix": ". Switch back to Auto-detect if the hotspot map does not line up.",
         "mouse.interactive_layout_coming": "Interactive layout coming later",
         "mouse.auto_detect": "Auto-detect",
+        "mouse.generic_mouse_mode": "Generic Mouse Mode",
+        "mouse.generic_mouse_side_buttons": "XBUTTON1 / XBUTTON2",
 
         # Mouse page — action / mapping helpers
         "mouse.do_nothing": "Do Nothing",
@@ -273,6 +275,8 @@ _TRANSLATIONS = {
         "mouse.experimental_override_suffix": "\u3002\u5982\u679c\u70ed\u70b9\u56fe\u4e0d\u5bf9\u9f50\uff0c\u8bf7\u5207\u6362\u56de\u81ea\u52a8\u68c0\u6d4b\u3002",
         "mouse.interactive_layout_coming": "\u4ea4\u4e92\u5f0f\u5e03\u5c40\u5373\u5c06\u63a8\u51fa",
         "mouse.auto_detect": "\u81ea\u52a8\u68c0\u6d4b",
+        "mouse.generic_mouse_mode": "\u901a\u7528\u9f20\u6807\u6a21\u5f0f",
+        "mouse.generic_mouse_side_buttons": "XBUTTON1 / XBUTTON2",
 
         "mouse.do_nothing": "\u65e0\u64cd\u4f5c",
         "mouse.horizontal_scroll": "\u6c34\u5e73\u6eda\u52a8",
@@ -493,6 +497,8 @@ _TRANSLATIONS = {
         "mouse.experimental_override_suffix": "\u3002\u5982\u679c\u71b1\u9ede\u5716\u4e0d\u5c0d\u9f4a\uff0c\u8acb\u5207\u63db\u56de\u81ea\u52d5\u5075\u6e2c\u3002",
         "mouse.interactive_layout_coming": "\u4e92\u52d5\u5f0f\u7248\u9762\u914d\u7f6e\u5373\u5c07\u63a8\u51fa",
         "mouse.auto_detect": "\u81ea\u52d5\u5075\u6e2c",
+        "mouse.generic_mouse_mode": "\u901a\u7528\u6ed1\u9f20\u6a21\u5f0f",
+        "mouse.generic_mouse_side_buttons": "XBUTTON1 / XBUTTON2",
 
         "mouse.do_nothing": "\u7121\u52d5\u4f5c",
         "mouse.horizontal_scroll": "\u6c34\u5e73\u6372\u52d5",
@@ -699,6 +705,8 @@ _BUTTON_TR: dict[str, dict[str, str]] = {
         "Gesture button":         "\u624b\u52bf\u952e",
         "Back button":            "\u540e\u9000\u952e",
         "Forward button":         "\u524d\u8fdb\u952e",
+        "Generic XBUTTON1":       "\u901a\u7528 XBUTTON1",
+        "Generic XBUTTON2":       "\u901a\u7528 XBUTTON2",
         "Horizontal scroll left": "\u6c34\u5e73\u5de6\u6eda",
         "Horizontal scroll right":"\u6c34\u5e73\u53f3\u6eda",
         "Horizontal Scroll":      "\u6c34\u5e73\u6eda\u52a8",
@@ -713,6 +721,8 @@ _BUTTON_TR: dict[str, dict[str, str]] = {
         "Gesture button":         "\u624b\u52e2\u9375",
         "Back button":            "\u5f8c\u9000\u9375",
         "Forward button":         "\u524d\u9032\u9375",
+        "Generic XBUTTON1":       "\u901a\u7528 XBUTTON1",
+        "Generic XBUTTON2":       "\u901a\u7528 XBUTTON2",
         "Horizontal scroll left": "\u6c34\u5e73\u5de6\u6372",
         "Horizontal scroll right":"\u6c34\u5e73\u53f3\u6372",
         "Horizontal Scroll":      "\u6c34\u5e73\u6372\u52d5",
