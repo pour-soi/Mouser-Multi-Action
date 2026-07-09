@@ -896,8 +896,8 @@ class BackendDeviceLayoutTests(unittest.TestCase):
         with patch("ui.backend.sys.platform", "win32"):
             backend = self._make_backend(cfg=cfg)
 
-        self.assertFalse(backend.mouseConnected)
-        self.assertEqual(backend.deviceStatusKind, "generic_ready")
+            self.assertFalse(backend.mouseConnected)
+            self.assertEqual(backend.deviceStatusKind, "generic_ready")
 
     def test_generic_mouse_toggle_updates_device_status_immediately(self):
         cfg = copy.deepcopy(DEFAULT_CONFIG)
@@ -956,9 +956,9 @@ class BackendDeviceLayoutTests(unittest.TestCase):
             backend.deviceStatusChanged.connect(lambda: notifications.append(backend.deviceStatusKind))
             backend._handleConnectionChange(False)
 
-        self.assertFalse(backend.mouseConnected)
-        self.assertEqual(backend.deviceStatusKind, "generic_ready")
-        self.assertEqual(notifications, ["generic_ready"])
+            self.assertFalse(backend.mouseConnected)
+            self.assertEqual(backend.deviceStatusKind, "generic_ready")
+            self.assertEqual(notifications, ["generic_ready"])
 
     def test_generic_mouse_mode_coexists_with_logitech_layout_without_duplicates(self):
         cfg = copy.deepcopy(DEFAULT_CONFIG)
