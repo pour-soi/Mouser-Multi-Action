@@ -883,6 +883,7 @@ class BackendDeviceLayoutTests(unittest.TestCase):
                 ["middle", "generic_xbutton1", "generic_xbutton2"],
             )
 
+    @patch("ui.backend.sys.platform", "win32")
     def test_generic_mouse_layout_localizes_labels_without_changing_action_ids(self):
         cfg = copy.deepcopy(DEFAULT_CONFIG)
         cfg["settings"]["generic_mouse_enabled"] = True
@@ -892,8 +893,17 @@ class BackendDeviceLayoutTests(unittest.TestCase):
         mappings["generic_xbutton2"] = "paste"
         locale_manager = LocaleManager("en")
 
-        with patch("ui.backend.sys.platform", "win32"):
-            backend = self._make_backend(cfg=cfg, locale_manager=locale_manager)
+        backend = self._make_backend(
+            engine=_FakeEngine(device_connected=False, connected_device=None),
+            cfg=cfg,
+            locale_manager=locale_manager,
+        )
+        saved_mappings = copy.deepcopy(
+            backend._cfg["profiles"]["default"]["mappings"]
+        )
+
+        self.assertFalse(backend.mouseConnected)
+        self.assertEqual(backend.effectiveDeviceLayoutKey, "generic_mouse")
 
         def visible_labels():
             return [
@@ -935,6 +945,10 @@ class BackendDeviceLayoutTests(unittest.TestCase):
         self.assertEqual(
             [button["actionId"] for button in backend.buttons],
             action_ids,
+        )
+        self.assertEqual(
+            backend._cfg["profiles"]["default"]["mappings"],
+            saved_mappings,
         )
 
     def test_device_status_no_logitech_generic_off(self):
