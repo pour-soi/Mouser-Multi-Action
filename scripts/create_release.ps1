@@ -57,6 +57,7 @@ if ([string]::IsNullOrWhiteSpace($Version)) {
 $VersionTag = "v$Version"
 $PackageName = "$PackageBaseName-$VersionTag"
 $ZipPath = Join-Path $ReleaseDir "$PackageName-Windows.zip"
+$ChecksumPath = "$ZipPath.sha256"
 $VersionedReleaseNotes = Join-Path $ReleaseDir "RELEASE_NOTES-$VersionTag.md"
 $StageDir = Join-Path $StageRoot $PackageName
 
@@ -93,7 +94,7 @@ Write-Host "[$ProjectName] Staging release..."
 New-Item -ItemType Directory -Force -Path $StageDir | Out-Null
 Copy-Item -Path (Join-Path $BuiltApp "*") -Destination $StageDir -Recurse -Force
 
-foreach ($doc in @("LICENSE", "README.md", "CHANGELOG.md", "RELEASE_NOTES.md")) {
+foreach ($doc in @("LICENSE", "README.md", "README_CN.md", "CHANGELOG.md", "RELEASE_NOTES.md")) {
     $src = Join-Path $Root $doc
     if (-not (Test-Path -LiteralPath $src)) {
         throw "Missing release document: $doc"
@@ -107,9 +108,13 @@ Copy-Item -LiteralPath (Join-Path $Root "CHANGELOG.md") -Destination (Join-Path 
 Write-Host "[$ProjectName] Creating $ZipPath..."
 Compress-Archive -LiteralPath $StageDir -DestinationPath $ZipPath -CompressionLevel Optimal
 
+$ZipHash = (Get-FileHash -LiteralPath $ZipPath -Algorithm SHA256).Hash.ToLowerInvariant()
+Set-Content -LiteralPath $ChecksumPath -Value "$ZipHash  $([System.IO.Path]::GetFileName($ZipPath))" -Encoding ascii
+
 Remove-Item -LiteralPath $StageRoot -Recurse -Force
 
 Write-Host "[$ProjectName] Release complete:"
 Write-Host "  $ZipPath"
+Write-Host "  $ChecksumPath"
 Write-Host "  $VersionedReleaseNotes"
 Write-Host "  $(Join-Path $ReleaseDir 'CHANGELOG.md')"

@@ -40,10 +40,18 @@ jobs:
       - name: Create archive
         run: Compress-Archive -Path dist\\PourInput -DestinationPath "${{ env.WINDOWS_ARCHIVE_NAME }}"
 
+      - name: Create SHA-256 checksum
+        shell: pwsh
+        run: |
+          $hash = (Get-FileHash -LiteralPath "${{ env.WINDOWS_ARCHIVE_NAME }}" -Algorithm SHA256).Hash.ToLowerInvariant()
+          Set-Content -LiteralPath "${{ env.WINDOWS_ARCHIVE_NAME }}.sha256" -Value "$hash  ${{ env.WINDOWS_ARCHIVE_NAME }}" -Encoding ascii
+
       - uses: actions/upload-artifact@v7
         with:
           name: PourInput-Windows
-          path: ${{ env.WINDOWS_ARCHIVE_NAME }}
+          path: |
+            ${{ env.WINDOWS_ARCHIVE_NAME }}
+            ${{ env.WINDOWS_ARCHIVE_NAME }}.sha256
 
   build-macos:
     name: build-macos (${{ matrix.name }})
@@ -265,6 +273,7 @@ jobs:
               --repo "${{ github.repository }}" \
               --clobber \
               "PourInput-Windows/${{ env.WINDOWS_ARCHIVE_NAME }}" \
+              "PourInput-Windows/${{ env.WINDOWS_ARCHIVE_NAME }}.sha256" \
               pourinput-${{ env.RELEASE_TAG }}-update.json
           else
             gh release create "${{ env.RELEASE_TAG }}" \
@@ -272,5 +281,6 @@ jobs:
               --title "PourInput ${{ env.RELEASE_TAG }}" \
               --generate-notes \
               "PourInput-Windows/${{ env.WINDOWS_ARCHIVE_NAME }}" \
+              "PourInput-Windows/${{ env.WINDOWS_ARCHIVE_NAME }}.sha256" \
               pourinput-${{ env.RELEASE_TAG }}-update.json
           fi

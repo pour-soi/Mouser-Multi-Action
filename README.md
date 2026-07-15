@@ -11,15 +11,15 @@
 Open-source mouse customization for Multi-Action input, Generic Mouse Mode, and smarter workflows.
 
 <p>
-  <a href="https://github.com/pour-soi/PourInput/releases/download/v1.2.1/PourInput-v1.2.1-Windows.zip">
-    <img src="https://img.shields.io/badge/Download_for_Windows-v1.2.1-0078D4?style=for-the-badge&logo=windows11&logoColor=white" alt="Download for Windows">
+  <a href="https://github.com/pour-soi/PourInput/releases/download/v1.3.0/PourInput-v1.3.0-Windows.zip">
+    <img src="https://img.shields.io/badge/Download_for_Windows-v1.3.0-0078D4?style=for-the-badge&logo=windows11&logoColor=white" alt="Download for Windows">
   </a>
-  <a href="https://github.com/pour-soi/PourInput/releases/tag/v1.2.1">
-    <img src="https://img.shields.io/badge/Release_Notes-v1.2.1-555555?style=for-the-badge" alt="Release Notes">
+  <a href="https://github.com/pour-soi/PourInput/releases/tag/v1.3.0">
+    <img src="https://img.shields.io/badge/Release_Notes-v1.3.0-555555?style=for-the-badge" alt="Release Notes">
   </a>
 </p>
 
-Latest: `v1.2.1` · Windows
+Latest: `v1.3.0` · Windows
 
 [![CI](https://github.com/pour-soi/PourInput/actions/workflows/ci.yml/badge.svg)](https://github.com/pour-soi/PourInput/actions/workflows/ci.yml)
 [![Latest Release](https://img.shields.io/github/v/release/pour-soi/PourInput?sort=semver)](https://github.com/pour-soi/PourInput/releases)
@@ -50,6 +50,14 @@ PourInput does not replace every Logitech Options+ feature. It is a focused, ope
 - **Application-specific profiles** - automatically switch button mappings for different applications.
 - **Built-in screenshot actions** - capture the full screen or a selected region to the clipboard or a file.
 - **Portable Windows release** - packaged builds do not require a separate Python installation.
+
+## Screenshots
+
+| Mouse & Profiles | General Settings |
+|---|---|
+| ![PourInput Mouse and Profiles page in English light mode](images/Screenshot_mouse.png) | ![PourInput General Settings page in Simplified Chinese light mode](images/Screenshot_settings.png) |
+
+![PourInput Generic Mouse Mode page in Simplified Chinese light mode](images/Screenshot.png)
 
 ## How It Works
 
@@ -91,25 +99,25 @@ Generic Mouse Mode does not support left-button remapping, right-button remappin
 
 ## Download & Installation
 
-Current version: `v1.2.1`
+Current version: `v1.3.0`
 
 Windows users should download:
 
 ```text
-PourInput-v1.2.1-Windows.zip
+PourInput-v1.3.0-Windows.zip
 ```
 
 Direct download:
-[PourInput-v1.2.1-Windows.zip](https://github.com/pour-soi/PourInput/releases/download/v1.2.1/PourInput-v1.2.1-Windows.zip)
+[PourInput-v1.3.0-Windows.zip](https://github.com/pour-soi/PourInput/releases/download/v1.3.0/PourInput-v1.3.0-Windows.zip)
 
 Release notes:
-[v1.2.1 — Generic Mouse Status Fix](https://github.com/pour-soi/PourInput/releases/tag/v1.2.1)
+[v1.3.0 — PourInput Visual System](https://github.com/pour-soi/PourInput/releases/tag/v1.3.0)
 
 Installation:
 
-1. Download `PourInput-v1.2.1-Windows.zip`.
+1. Download `PourInput-v1.3.0-Windows.zip`.
 2. Extract the zip file.
-3. Run `PourInput-v1.2.1/PourInput.exe`.
+3. Run `PourInput-v1.3.0/PourInput.exe`.
 4. Quit any other PourInput or PourInput build before launching this one.
 
 The packaged Windows app includes the runtime files it needs. You do not need to install Python to use a release build.
@@ -118,12 +126,13 @@ On first launch, PourInput creates its configuration automatically. English is u
 
 ## Platform Support
 
-Windows is the only official public release target for v1.2.1.
+Windows is the only official public release target for v1.3.0.
 
 The public GitHub Release should contain only:
 
-- `PourInput-v1.2.1-Windows.zip`
-- `pourinput-v1.2.1-update.json`
+- `PourInput-v1.3.0-Windows.zip`
+- `PourInput-v1.3.0-Windows.zip.sha256`
+- `pourinput-v1.3.0-update.json`
 
 macOS support is planned but not officially available. Linux support remains validation-only and is not an official public release target.
 
@@ -197,7 +206,7 @@ These are development directions, not guaranteed release commitments or fixed de
 
 ## Development
 
-Design and visual-release documentation starts with the [Pour product-family design system](docs/POUR_DESIGN_SYSTEM.md).
+Start with the [architecture overview](docs/ARCHITECTURE.md) for runtime structure and the [Pour product-family design system](docs/POUR_DESIGN_SYSTEM.md) for design and visual-release guidance.
 
 Requirements:
 
@@ -233,7 +242,7 @@ Build the Windows app:
 Create a versioned Windows release package:
 
 ```powershell
-.\scripts\create_release.ps1 -Version v1.2.1
+.\scripts\create_release.ps1 -Version v1.3.0
 ```
 
 The release script writes versioned output under `release/` and preserves `.git`, source code, release history, settings, logs, and previous versioned releases.

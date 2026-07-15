@@ -1,6 +1,6 @@
-# PourInput v1.2.1 — Generic Mouse Status Fix
+# PourInput v1.3.0 — Visual System and Architecture
 
-Release date: 2026-07-09
+Release date: TBD
 
 Repository: `pour-soi/PourInput`
 
@@ -10,61 +10,59 @@ Maintainer: `pour-soi`
 
 ## English
 
-PourInput v1.2.1 is a small patch release for the device status shown when Generic Mouse Mode is active.
+PourInput v1.3.0 gives the application and project a cohesive visual identity while keeping its input, remapping, device, and profile behavior unchanged.
 
-Generic Mouse Mode functionality itself was already working: a standard mouse could use configured Generic Mouse Mode actions without a supported Logitech mouse. The issue was that the Mouse page status badge still reported the device as disconnected because it only reflected supported Logitech HID++ connection state.
+### Highlights
 
-This release keeps Logitech device detection separate from Generic Mouse Mode readiness:
+- A redesigned desktop interface with a consistent PourInput visual system, refined navigation, spacing, typography, controls, profiles, settings, and light/dark themes.
+- Finalized PourInput branding across the Windows executable, macOS and Linux application assets, tray presentation, About view, and repository homepage.
+- A complete design-system documentation set covering shared tokens, components, brand assets, screenshots, and visual release checks.
+- A complete architecture documentation set covering runtime ownership, event flow, mappings, profiles, settings, state management, QML structure, and project layout.
+- Simplified, aligned English and Simplified Chinese README pages with a clearer Windows download path.
 
-- Supported Logitech device connected: `Connected — <device name>`
-- No supported Logitech device and Generic Mouse Mode enabled: `Generic Mouse Mode Ready`
-- No supported Logitech device and Generic Mouse Mode disabled: `No supported mouse detected`
-
-Generic Mouse Mode still does not identify a specific physical standard mouse. It does not claim a standard mouse name or per-device identity.
-
-No input, remapping, hook, blocking, button support, Logitech HID++, or localization-scope behavior changed in this release.
+This release does not intentionally change mouse input handling, mappings, action execution, device capabilities, profile behavior, updater behavior, or supported platforms.
 
 ## 简体中文
 
-PourInput v1.2.1 是一个小型补丁版本，修正通用鼠标模式启用时鼠标页面显示的设备状态。
+PourInput v1.3.0 为应用程序和项目建立了统一的视觉识别，同时保持输入、重映射、设备与配置文件行为不变。
 
-通用鼠标模式本身此前已经可以正常工作：即使没有受支持的 Logitech 鼠标，普通鼠标也可以通过通用鼠标模式使用已配置的操作。问题在于鼠标页面的状态标签只反映受支持 Logitech HID++ 设备的连接状态，因此会误显示为未连接。
+### 主要内容
 
-此版本将 Logitech 设备连接状态与通用鼠标模式就绪状态分开显示：
+- 重新设计桌面界面，统一 PourInput 视觉系统，并优化导航、间距、字体、控件、配置文件、设置以及明暗主题。
+- 完成 Windows 可执行文件、macOS 与 Linux 应用资源、托盘、关于页面和仓库主页中的 PourInput 品牌统一。
+- 新增完整的设计系统文档，包括共享设计变量、组件、品牌资源、截图规范和视觉发布检查表。
+- 新增完整的架构文档，包括运行时职责、事件流、映射、配置文件、设置、状态管理、QML 结构和项目目录。
+- 简化并对齐英文和简体中文 README，提供更清晰的 Windows 下载路径。
 
-- 已连接受支持的 Logitech 设备：`已连接 — <device name>`
-- 没有受支持的 Logitech 设备，但已启用通用鼠标模式：`通用鼠标模式已就绪`
-- 没有受支持的 Logitech 设备，且未启用通用鼠标模式：`未检测到受支持的鼠标`
-
-通用鼠标模式仍然不会识别某一只具体的普通鼠标，也不会显示虚构的标准鼠标名称或物理设备身份。
-
-此版本没有改变输入、重映射、鼠标钩子、事件阻止、按键支持、Logitech HID++ 或本地化范围。
+此版本不会有意更改鼠标输入处理、映射、动作执行、设备能力、配置文件行为、更新行为或支持的平台。
 
 ## Release Policy
 
-Windows remains the only official release target for v1.2.1.
+Windows is the only official public release target for v1.3.0.
 
 The public GitHub Release should contain only:
 
-- `PourInput-v1.2.1-Windows.zip`
-- `pourinput-v1.2.1-update.json`
+- `PourInput-v1.3.0-Windows.zip`
+- `PourInput-v1.3.0-Windows.zip.sha256`
+- `pourinput-v1.3.0-update.json`
 
-macOS and Linux CI/build validation may remain, but public macOS and Linux release packages are not part of the official v1.2.1 release.
+macOS and Linux CI/build validation may remain, but public macOS and Linux packages are not part of the official v1.3.0 release.
 
 ## Validation
 
-This patch release is covered by focused tests for:
+The release candidate is expected to pass:
 
-- Backend device status states.
-- Generic Mouse Mode status transitions.
-- Locale manager translations.
-- QML policy coverage for the status labels.
-- Update/version behavior.
+- The full automated test suite.
+- Windows PyInstaller packaging and executable startup checks.
+- SHA-256 verification of the uploaded Windows archive.
+- Version and build-metadata checks inside the packaged application.
+- Documentation-link and release-asset audits.
+- The PourInput visual release checklist against the candidate build.
 
 ## Known Limitations
 
 - Windows remains the only official release target.
-- Generic Mouse Mode is Windows-only.
-- Generic Mouse Mode supports Middle Button, Side Button 1, and Side Button 2 only.
+- Generic Mouse Mode is Windows-only and supports Middle Button, Side Button 1, and Side Button 2.
 - Generic Mouse Mode cannot currently distinguish multiple standard mice by physical source device.
-- Device support still depends on firmware, operating system exposure, and HID++ features.
+- Device support depends on firmware, operating-system exposure, and HID++ features.
+- Long-press timeout is fixed at 300 ms; double-click, macros, and sequential actions are not implemented.

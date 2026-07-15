@@ -6,6 +6,20 @@ This project uses Semantic Versioning.
 
 ## Unreleased
 
+## v1.3.0 - 2026-07-14
+
+### Changed
+
+- Redesigned the desktop interface around a consistent PourInput visual system while preserving existing input and mapping behavior.
+- Replaced legacy application identity artwork with finalized PourInput branding across Windows, macOS, Linux, the tray, and repository presentation.
+- Refined navigation, profiles, settings, controls, spacing, typography, light/dark themes, and high-DPI presentation.
+
+### Documentation
+
+- Added the Pour product-family design system, component reference, brand asset guidelines, screenshot standards, and release visual checklist.
+- Added architecture, event flow, profile, mapping, settings, state-management, QML, and project-structure references.
+- Simplified and aligned the English and Simplified Chinese README homepages and download instructions.
+
 ## v1.2.1 — 2026-07-09
 
 ### Fixed
