@@ -4,8 +4,6 @@ Release date: TBD
 
 Repository: `pour-soi/PourInput`
 
-Based on: `TomBadash/Mouser`
-
 Maintainer: `pour-soi`
 
 ## English
