@@ -42,6 +42,9 @@ class LocaleManagerTranslationTests(unittest.TestCase):
         self.assertEqual(manager.tr("mouse.no_supported_mouse_detected"), "\u672a\u68c0\u6d4b\u5230\u53d7\u652f\u6301\u7684\u9f20\u6807")
         self.assertEqual(manager.tr("mouse.click_action"), "\u5355\u51fb\u64cd\u4f5c")
         self.assertEqual(manager.tr("mouse.long_press_action"), "\u957f\u6309\u64cd\u4f5c")
+        self.assertEqual(manager.tr("mouse.device_fallback_name"), "\u9f20\u6807\u8bbe\u5907")
+        self.assertEqual(manager.tr("mouse.default_profile"), "\u9ed8\u8ba4\uff08\u6240\u6709\u5e94\u7528\uff09")
+        self.assertEqual(manager.tr("about.build_mode.source"), "\u6e90\u7801\u68c0\u51fa")
 
     def test_switching_back_to_english_restores_english_labels(self):
         manager = LocaleManager("zh_CN")
@@ -54,6 +57,24 @@ class LocaleManagerTranslationTests(unittest.TestCase):
         self.assertEqual(manager.tr("mouse.no_supported_mouse_detected"), "No supported mouse detected")
         self.assertEqual(manager.tr("mouse.click_action"), "Click Action")
         self.assertEqual(manager.tr("mouse.long_press_action"), "Long Press Action")
+        self.assertEqual(manager.tr("mouse.device_fallback_name"), "Mouse device")
+        self.assertEqual(manager.tr("mouse.default_profile"), "Default (All Apps)")
+        self.assertEqual(manager.tr("about.build_mode.source"), "Source checkout")
+
+    def test_regression_audit_presentation_keys_exist_in_all_locales(self):
+        required = {
+            "mouse.default_profile",
+            "mouse.device_fallback_name",
+            "mouse.generic_layout_note",
+            "about.build_mode.packaged",
+            "about.build_mode.source",
+        }
+
+        for locale, strings in _TRANSLATIONS.items():
+            with self.subTest(locale=locale):
+                self.assertTrue(required.issubset(strings))
+                for key in required:
+                    self.assertTrue(strings[key].strip())
 
     def test_generic_mouse_button_names_translate(self):
         manager = LocaleManager("zh_CN")

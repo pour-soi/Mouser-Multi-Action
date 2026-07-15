@@ -68,7 +68,22 @@ Item {
 
     // ── Profile state ─────────────────────────────────────────
     property string selectedProfile: backend.activeProfile
-    property string selectedProfileLabel: ""
+    readonly property string selectedProfileLabel: {
+        var localeStrings = s
+        var profs = backend.profiles
+        for (var i = 0; i < profs.length; i++) {
+            if (profs[i].name === selectedProfile)
+                return profileDisplayLabel(profs[i])
+        }
+        return ""
+    }
+    readonly property string displayDeviceName: {
+        var localeStrings = s
+        var name = backend.deviceDisplayName
+        return name === "Mouse device"
+               ? (localeStrings["mouse.device_fallback_name"] || name)
+               : name
+    }
     property var selectedProfileMappingState: ({})
     property string appSearchText: ""
     property var filteredKnownApps: []
@@ -111,19 +126,19 @@ Item {
 
     function selectProfile(name) {
         selectedProfile = name
-        selectedProfileLabel = ""
-        var profs = backend.profiles
-        for (var i = 0; i < profs.length; i++) {
-            if (profs[i].name === name) {
-                selectedProfileLabel = profs[i].label
-                break
-            }
-        }
         refreshSelectedProfileMappings()
         // Clear hotspot selection when switching profiles
         selectedButton = ""
         selectedActionId = ""
         selectedLongActionId = "none"
+    }
+
+    function profileDisplayLabel(profile) {
+        if (!profile)
+            return ""
+        if (profile.name === "default")
+            return s["mouse.default_profile"] || profile.label
+        return profile.label || ""
     }
 
     function appMatchesSearch(app, query) {
@@ -326,13 +341,11 @@ Item {
     Connections {
         target: backend
         function onProfilesChanged() {
-            // Refresh label/apps if current profile still exists
+            // Keep the current profile selected if it still exists.
             var profs = backend.profiles
             for (var i = 0; i < profs.length; i++) {
-                if (profs[i].name === selectedProfile) {
-                    selectedProfileLabel = profs[i].label
+                if (profs[i].name === selectedProfile)
                     return
-                }
             }
             // Profile deleted — fall back to active
             selectProfile(backend.activeProfile)
@@ -622,7 +635,7 @@ Item {
                                 spacing: 2
 
                                 Text {
-                                    text: modelData.label
+                                    text: profileDisplayLabel(modelData)
                                     font {
                                         family: uiState.fontFamily
                                         pixelSize: 12; weight: Font.DemiBold
@@ -771,7 +784,7 @@ Item {
                                     spacing: 8
 
                                     Text {
-                                        text: backend.deviceDisplayName
+                                        text: displayDeviceName
                                         font { family: uiState.fontFamily; pixelSize: 24; bold: true }
                                         color: theme.textPrimary
                                     }
@@ -1235,7 +1248,9 @@ Item {
                                 }
 
                                 Text {
-                                    text: backend.deviceLayoutNote
+                                    text: backend.effectiveDeviceLayoutKey === "generic_mouse"
+                                          ? (s["mouse.generic_layout_note"] || backend.deviceLayoutNote)
+                                          : backend.deviceLayoutNote
                                     width: parent.width
                                     wrapMode: Text.WordWrap
                                     font { family: uiState.fontFamily; pixelSize: 12 }

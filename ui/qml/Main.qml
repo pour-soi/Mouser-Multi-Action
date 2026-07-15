@@ -27,6 +27,11 @@ ApplicationWindow {
                                                   ? "Consolas"
                                                   : "monospace")
     property var s: lm.strings
+    readonly property string displayBuildMode: appBuildMode === "Packaged app"
+                                                ? (s["about.build_mode.packaged"] || appBuildMode)
+                                                : (appBuildMode === "Source checkout"
+                                                   ? (s["about.build_mode.source"] || appBuildMode)
+                                                   : appBuildMode)
     property int currentPage: 0
     property Item hoveredNavItem: null
     property string hoveredNavText: ""
@@ -459,7 +464,7 @@ ApplicationWindow {
                                 Text {
                                     id: buildModeChipLabel
                                     anchors.centerIn: parent
-                                    text: appBuildMode
+                                    text: displayBuildMode
                                     font { family: uiState.fontFamily; pixelSize: 11; bold: true }
                                     color: root.theme.textPrimary
                                 }
@@ -507,7 +512,7 @@ ApplicationWindow {
                                 anchors.right: parent.right
                                 anchors.rightMargin: 18
                                 anchors.verticalCenter: parent.verticalCenter
-                                text: appBuildMode
+                                text: displayBuildMode
                                 font { family: uiState.fontFamily; pixelSize: 14 }
                                 color: theme.textPrimary
                             }

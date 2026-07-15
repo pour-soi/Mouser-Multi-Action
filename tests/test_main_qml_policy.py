@@ -50,6 +50,24 @@ class LanguageSwitchingQmlPolicyTests(unittest.TestCase):
         self.assertIn("(lm.strings, lm.trButton(modelData.name))", source)
         self.assertIn("(lm.strings, lm.trAction(modelData.actionLabel))", source)
 
+    def test_mouse_fallbacks_and_default_profile_retranslate(self):
+        source = (ROOT / "ui" / "qml" / "MousePage.qml").read_text(encoding="utf-8")
+
+        self.assertIn('localeStrings["mouse.device_fallback_name"]', source)
+        self.assertIn('s["mouse.default_profile"]', source)
+        self.assertIn('s["mouse.generic_layout_note"]', source)
+        self.assertIn('backend.effectiveDeviceLayoutKey === "generic_mouse"', source)
+        self.assertIn('profile.name === "default"', source)
+        self.assertIn('return profile.label || ""', source)
+
+    def test_about_build_mode_retranslates_without_changing_metadata(self):
+        source = (ROOT / "ui" / "qml" / "Main.qml").read_text(encoding="utf-8")
+
+        self.assertIn("readonly property string displayBuildMode", source)
+        self.assertIn('s["about.build_mode.packaged"]', source)
+        self.assertIn('s["about.build_mode.source"]', source)
+        self.assertEqual(source.count("text: displayBuildMode"), 2)
+
     def test_key_capture_validation_fallback_uses_locale_manager(self):
         source = (ROOT / "ui" / "qml" / "KeyCaptureDialog.qml").read_text(encoding="utf-8")
 
