@@ -122,7 +122,6 @@ Item {
         refreshSelectedProfileMappings()
         // Clear hotspot selection when switching profiles
         selectedButton = ""
-        selectedButtonName = ""
         selectedActionId = ""
         selectedLongActionId = "none"
     }
@@ -346,7 +345,14 @@ Item {
 
     // ── Button / hotspot state ────────────────────────────────
     property string selectedButton: ""
-    property string selectedButtonName: ""
+    readonly property string selectedButtonName: {
+        if (selectedButton === "")
+            return ""
+        if (selectedButton === "hscroll_left")
+            return s["mouse.horizontal_scroll"] || "Horizontal Scroll"
+        var mapping = mappingFor(selectedButton)
+        return mapping ? (lm.strings, lm.trButton(mapping.name)) : ""
+    }
     property string selectedActionId: ""
     property string selectedLongActionId: "none"
     readonly property string hscrollLeftActionId: selectedProfileMappingState.hscroll_left
@@ -387,7 +393,6 @@ Item {
     function selectButton(key) {
         if (selectedButton === key) {
             selectedButton = ""
-            selectedButtonName = ""
             selectedActionId = ""
             selectedLongActionId = "none"
             return
@@ -395,7 +400,6 @@ Item {
         var mapping = mappingFor(key)
         if (mapping) {
             selectedButton = key
-            selectedButtonName = lm.trButton(mapping.name)
             selectedActionId = mapping.actionId
             selectedLongActionId = longActionIdFor(key)
         }
@@ -404,13 +408,11 @@ Item {
     function selectHScroll() {
         if (selectedButton === "hscroll_left") {
             selectedButton = ""
-            selectedButtonName = ""
             selectedActionId = ""
             selectedLongActionId = "none"
             return
         }
         selectedButton = "hscroll_left"
-        selectedButtonName = s["mouse.horizontal_scroll"] || "Horizontal Scroll"
         var mapping = mappingFor("hscroll_left")
         selectedActionId = mapping ? mapping.actionId : "none"
         selectedLongActionId = "none"
@@ -433,7 +435,7 @@ Item {
     function actionFor(key) {
         var mapping = mappingFor(key)
         if (mapping)
-            return lm.trAction(mapping.actionLabel)
+            return (lm.strings, lm.trAction(mapping.actionLabel))
         return s["mouse.do_nothing"] || "Do Nothing"
     }
 
@@ -466,8 +468,11 @@ Item {
         if (!backend.supportsGestureDirections)
             return actionFor("gesture")
         if (!hasGestureSwipeAction)
-            return (s["mouse.tap"] || "Tap: ") + lm.trAction(gestureTapActionLabel)
-        return (s["mouse.tap"] || "Tap: ") + lm.trAction(gestureTapActionLabel) + " | " + (s["mouse.swipes_configured"] || "Swipes configured")
+            return (s["mouse.tap"] || "Tap: ")
+                   + (lm.strings, lm.trAction(gestureTapActionLabel))
+        return (s["mouse.tap"] || "Tap: ")
+               + (lm.strings, lm.trAction(gestureTapActionLabel))
+               + " | " + (s["mouse.swipes_configured"] || "Swipes configured")
     }
 
     function hotspotSublabel(hotspot) {
@@ -476,9 +481,10 @@ Item {
         if (hotspot.summaryType === "gesture")
             return gestureSummary()
         if (hotspot.summaryType === "hscroll")
-            return (s["mouse.left_short"] || "L") + ": " + lm.trAction(hscrollLeftActionLabel)
+            return (s["mouse.left_short"] || "L") + ": "
+                   + (lm.strings, lm.trAction(hscrollLeftActionLabel))
                    + " | " + (s["mouse.right_short"] || "R") + ": "
-                   + lm.trAction(hscrollRightActionLabel)
+                   + (lm.strings, lm.trAction(hscrollRightActionLabel))
         return actionFor(hotspot.buttonKey)
     }
 
@@ -513,7 +519,6 @@ Item {
         function onDeviceLayoutChanged() {
             if (selectedButton !== "" && !layoutHasButton(selectedButton)) {
                 selectedButton = ""
-                selectedButtonName = ""
                 selectedActionId = ""
                 selectedLongActionId = "none"
             }
@@ -1261,7 +1266,7 @@ Item {
                                             spacing: 8
 
                                             Text {
-                                                text: lm.trButton(modelData.name)
+                                                text: (lm.strings, lm.trButton(modelData.name))
                                                 width: parent.width * 0.45
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 font { family: uiState.fontFamily; pixelSize: 13; bold: true }
@@ -1271,7 +1276,7 @@ Item {
                                             }
 
                                             Text {
-                                                text: lm.trAction(modelData.actionLabel)
+                                                text: (lm.strings, lm.trAction(modelData.actionLabel))
                                                 width: parent.width * 0.55 - 8
                                                 anchors.verticalCenter: parent.verticalCenter
                                                 horizontalAlignment: Text.AlignRight

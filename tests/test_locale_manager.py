@@ -59,8 +59,14 @@ class LocaleManagerTranslationTests(unittest.TestCase):
         manager = LocaleManager("zh_CN")
 
         self.assertEqual(manager.trButton("Middle Button"), "\u4e2d\u952e")
-        self.assertEqual(manager.trButton("Side Button 1"), "\u4fa7\u952e 1")
-        self.assertEqual(manager.trButton("Side Button 2"), "\u4fa7\u952e 2")
+        self.assertEqual(
+            manager.trButton("Side Button 1 — Back"),
+            "\u4fa7\u952e 1 — \u540e\u9000",
+        )
+        self.assertEqual(
+            manager.trButton("Side Button 2 — Forward"),
+            "\u4fa7\u952e 2 — \u524d\u8fdb",
+        )
 
     def test_action_display_names_translate_without_changing_inputs(self):
         manager = LocaleManager("zh_CN")

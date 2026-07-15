@@ -864,7 +864,11 @@ class BackendDeviceLayoutTests(unittest.TestCase):
             button_names = [button["name"] for button in backend.buttons]
             self.assertEqual(
                 button_names,
-                ["Middle Button", "Side Button 1", "Side Button 2"],
+                [
+                    "Middle Button",
+                    "Side Button 1 — Back",
+                    "Side Button 2 — Forward",
+                ],
             )
             for button in backend.buttons:
                 self.assertTrue(button["supportsMultiAction"])
@@ -878,6 +882,60 @@ class BackendDeviceLayoutTests(unittest.TestCase):
                 mapping_keys,
                 ["middle", "generic_xbutton1", "generic_xbutton2"],
             )
+
+    def test_generic_mouse_layout_localizes_labels_without_changing_action_ids(self):
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["generic_mouse_enabled"] = True
+        mappings = cfg["profiles"]["default"]["mappings"]
+        mappings["middle"] = "screenshot_region_clip"
+        mappings["generic_xbutton1"] = "copy"
+        mappings["generic_xbutton2"] = "paste"
+        locale_manager = LocaleManager("en")
+
+        with patch("ui.backend.sys.platform", "win32"):
+            backend = self._make_backend(cfg=cfg, locale_manager=locale_manager)
+
+        def visible_labels():
+            return [
+                (
+                    locale_manager.trButton(button["name"]),
+                    locale_manager.trAction(button["actionLabel"]),
+                )
+                for button in backend.buttons
+            ]
+
+        action_ids = [button["actionId"] for button in backend.buttons]
+        self.assertEqual(
+            visible_labels(),
+            [
+                ("Middle Button", "Screenshot Region → Clipboard"),
+                ("Side Button 1 — Back", "Copy (Ctrl+C)"),
+                ("Side Button 2 — Forward", "Paste (Ctrl+V)"),
+            ],
+        )
+        self.assertFalse(
+            any(
+                "\u4e00" <= char <= "\u9fff"
+                for label_pair in visible_labels()
+                for label in label_pair
+                for char in label
+            )
+        )
+
+        locale_manager.setLanguage("zh_CN")
+
+        self.assertEqual(
+            visible_labels(),
+            [
+                ("\u4e2d\u952e", "\u533a\u57df\u622a\u56fe → \u526a\u8d34\u677f"),
+                ("\u4fa7\u952e 1 — \u540e\u9000", "\u590d\u5236 (Ctrl+C)"),
+                ("\u4fa7\u952e 2 — \u524d\u8fdb", "\u7c98\u8d34 (Ctrl+V)"),
+            ],
+        )
+        self.assertEqual(
+            [button["actionId"] for button in backend.buttons],
+            action_ids,
+        )
 
     def test_device_status_no_logitech_generic_off(self):
         cfg = copy.deepcopy(DEFAULT_CONFIG)

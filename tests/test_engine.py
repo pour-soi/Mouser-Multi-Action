@@ -1,7 +1,7 @@
 import copy
 import unittest
 from types import SimpleNamespace
-from unittest.mock import Mock, patch
+from unittest.mock import Mock, call, patch
 
 from core.config import DEFAULT_CONFIG
 from core.mouse_hook import MouseEvent
@@ -468,6 +468,34 @@ class EngineHorizontalScrollTests(unittest.TestCase):
             handler(SimpleNamespace(event_type=MouseEvent.XBUTTON2_DOWN))
 
         execute_action_mock.assert_called_once_with("browser_forward")
+
+    def test_generic_side_buttons_keep_saved_back_and_forward_mappings(self):
+        from core.engine import Engine
+
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["generic_mouse_enabled"] = True
+        mappings = cfg["profiles"]["default"]["mappings"]
+        mappings["generic_xbutton1"] = "browser_back"
+        mappings["generic_xbutton2"] = "browser_forward"
+
+        with (
+            patch("core.engine.MouseHook", _FakeMouseHook),
+            patch("core.engine.AppDetector", _FakeAppDetector),
+            patch("core.engine.load_config", return_value=cfg),
+            patch("core.engine.sys.platform", "win32"),
+        ):
+            engine = Engine()
+
+        xbutton1_handler = engine.hook.callbacks[MouseEvent.XBUTTON1_DOWN][0]
+        xbutton2_handler = engine.hook.callbacks[MouseEvent.XBUTTON2_DOWN][0]
+        with patch("core.engine.execute_action") as execute_action_mock:
+            xbutton1_handler(SimpleNamespace(event_type=MouseEvent.XBUTTON1_DOWN))
+            xbutton2_handler(SimpleNamespace(event_type=MouseEvent.XBUTTON2_DOWN))
+
+        self.assertEqual(
+            execute_action_mock.call_args_list,
+            [call("browser_back"), call("browser_forward")],
+        )
 
     def test_generic_mouse_middle_click_dispatches_existing_action_handler(self):
         from core.engine import Engine

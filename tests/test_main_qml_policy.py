@@ -42,6 +42,14 @@ class LanguageSwitchingQmlPolicyTests(unittest.TestCase):
         self.assertNotIn('text: "DPI PRESETS"', source)
         self.assertNotIn('text: "Copy device info"', source)
 
+    def test_mouse_layout_labels_retranslate_when_language_changes(self):
+        source = (ROOT / "ui" / "qml" / "MousePage.qml").read_text(encoding="utf-8")
+
+        self.assertIn("readonly property string selectedButtonName", source)
+        self.assertIn("(lm.strings, lm.trButton(mapping.name))", source)
+        self.assertIn("(lm.strings, lm.trButton(modelData.name))", source)
+        self.assertIn("(lm.strings, lm.trAction(modelData.actionLabel))", source)
+
     def test_key_capture_validation_fallback_uses_locale_manager(self):
         source = (ROOT / "ui" / "qml" / "KeyCaptureDialog.qml").read_text(encoding="utf-8")
 

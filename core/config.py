@@ -53,8 +53,8 @@ MULTI_ACTION_BUTTONS = (
 LONG_PRESS_SUFFIX = "_long"
 DEFAULT_LONG_PRESS_THRESHOLD_MS = 300
 GENERIC_MOUSE_BUTTON_NAMES = {
-    "generic_xbutton1": "Side Button 1",
-    "generic_xbutton2": "Side Button 2",
+    "generic_xbutton1": "Side Button 1 — Back",
+    "generic_xbutton2": "Side Button 2 — Forward",
 }
 GENERIC_MOUSE_BUTTONS = tuple(GENERIC_MOUSE_BUTTON_NAMES)
 
