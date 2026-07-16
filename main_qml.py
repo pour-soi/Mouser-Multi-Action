@@ -58,7 +58,7 @@ os.environ["QT_QUICK_CONTROLS_MATERIAL_ACCENT"] = "#5d8ff3"
 _t1 = _time.perf_counter()
 from PySide6.QtWidgets import QApplication, QSystemTrayIcon, QMenu, QFileIconProvider, QMessageBox
 from PySide6.QtGui import QAction, QColor, QFont, QFontDatabase, QGuiApplication, QIcon, QPainter, QPixmap, QWindow
-from PySide6.QtCore import QObject, Property, QCoreApplication, QRectF, Qt, QUrl, Signal, QFileInfo, QEvent, QTimer
+from PySide6.QtCore import QObject, Property, QCoreApplication, QRectF, Qt, QUrl, Signal, Slot, QFileInfo, QEvent, QTimer
 from PySide6.QtQml import QQmlApplicationEngine
 from PySide6.QtQuick import QQuickImageProvider
 from PySide6.QtSvg import QSvgRenderer
