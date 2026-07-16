@@ -10,6 +10,13 @@ MOUSE_PAGE_QML = (ROOT / "ui" / "qml" / "MousePage.qml").read_text(
 
 
 class MainQmlShortcutGuardTests(unittest.TestCase):
+    def test_page_navigation_focuses_the_window_content_item(self):
+        self.assertIn(
+            "root.contentItem.forceActiveFocus(Qt.OtherFocusReason)",
+            MAIN_QML,
+        )
+        self.assertNotIn("root.forceActiveFocus(", MAIN_QML)
+
     def test_mouse_page_exposes_blocking_dialog_flag(self):
         self.assertIn("readonly property bool hasBlockingDialog", MOUSE_PAGE_QML)
         self.assertIn("keyCaptureDialog.visible", MOUSE_PAGE_QML)

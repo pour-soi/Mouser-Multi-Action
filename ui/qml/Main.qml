@@ -40,7 +40,7 @@ ApplicationWindow {
         if (root.currentPage === page)
             return
         root.currentPage = page
-        root.forceActiveFocus(Qt.OtherFocusReason)
+        root.contentItem.forceActiveFocus(Qt.OtherFocusReason)
     }
 
     color: theme.bg
