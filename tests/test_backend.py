@@ -981,6 +981,27 @@ class BackendDeviceLayoutTests(unittest.TestCase):
             saved_mappings,
         )
 
+    @patch("ui.backend.sys.platform", "win32")
+    def test_generic_mouse_remaps_interactive_xbutton_hotspots(self):
+        cfg = copy.deepcopy(DEFAULT_CONFIG)
+        cfg["settings"]["generic_mouse_enabled"] = True
+        backend = self._make_backend(cfg=cfg)
+        physical_hotspots = [
+            {"buttonKey": "xbutton1", "label": "Back"},
+            {"buttonKey": "xbutton2", "label": "Forward"},
+            {"buttonKey": "middle", "label": "Middle"},
+        ]
+        backend._device_layout = {"hotspots": physical_hotspots}
+
+        self.assertEqual(
+            [item["buttonKey"] for item in backend.deviceHotspots],
+            ["generic_xbutton1", "generic_xbutton2", "middle"],
+        )
+        self.assertEqual(
+            [item["buttonKey"] for item in physical_hotspots],
+            ["xbutton1", "xbutton2", "middle"],
+        )
+
     def test_device_status_no_logitech_generic_off(self):
         cfg = copy.deepcopy(DEFAULT_CONFIG)
         cfg["settings"]["generic_mouse_enabled"] = False

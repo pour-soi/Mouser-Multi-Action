@@ -714,7 +714,23 @@ class Backend(QObject):
 
     @Property(list, notify=deviceLayoutChanged)
     def deviceHotspots(self):
-        return list(self._device_layout.get("hotspots", []))
+        hotspots = self._device_layout.get("hotspots", [])
+        if not self._generic_mouse_enabled():
+            return list(hotspots)
+
+        result = []
+        for hotspot in hotspots:
+            item = dict(hotspot)
+            button_key = item.get("buttonKey")
+            mapping_key = resolve_windows_xbutton_mapping_key(
+                button_key,
+                generic_mouse_enabled=True,
+                platform_name=sys.platform,
+            )
+            if mapping_key:
+                item["buttonKey"] = mapping_key
+            result.append(item)
+        return result
 
     @Property(list, constant=True)
     def manualLayoutChoices(self):
