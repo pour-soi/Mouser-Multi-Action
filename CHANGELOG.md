@@ -6,6 +6,28 @@ This project uses Semantic Versioning.
 
 ## Unreleased
 
+## v1.3.2 - 2026-07-17
+
+### Fixed
+
+- Fixed MX Master 3 side-button mappings in Generic Mouse Mode.
+- Fixed the UI/runtime XBUTTON namespace mismatch that could save a mapping outside the active Generic Mouse Mode route.
+- Fixed QML focus restoration when reopening the main window from the system tray.
+- Fixed a missing Qt `Slot` import that prevented the application from starting.
+
+### Improved
+
+- Hardened Windows XBUTTON routing around immutable binding generations, dispatch leases, and retirement synchronization.
+- Improved queue-overflow lifecycle handling and isolated multi-action press state across route and generation changes.
+- Improved shutdown behavior for hook workers and retired callbacks.
+- Improved locale-aware font fallback while preserving platform-appropriate system fonts.
+
+### Validation
+
+- Verified with a real Logitech MX Master 3 connected over Bluetooth.
+- Logitech receiver transport remains to be validated.
+- Logitech Options and Options+ coexistence remains to be validated.
+
 ## v1.3.1 - 2026-07-15
 
 ### Fixed

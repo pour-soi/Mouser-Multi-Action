@@ -1,31 +1,33 @@
-# PourInput v1.3.1
+# PourInput v1.3.2
 
-Release date: TBD
+Release date: 2026-07-17
 
 Repository: `pour-soi/PourInput`
 
 ## Highlights
 
-PourInput v1.3.1 is a maintenance release focused on localization consistency, clearer Generic Mouse button labels, and improved bilingual project documentation.
+PourInput v1.3.2 is a maintenance release focused on reliable Windows side-button mapping, startup and tray stability, and clearer multilingual presentation.
 
 ## Fixed
 
-- Generic Mouse labels and action summaries now refresh consistently when switching languages.
-- Side Button 1 is presented as Back and Side Button 2 as Forward without changing their physical button IDs or saved mappings.
-- Remaining fallback device, default profile, fallback note, and About build-mode labels are localized at render time.
+- MX Master 3 Back and Forward mappings now use the active Generic Mouse Mode route selected in the UI.
+- The application starts correctly with the required Qt slot integration.
+- Reopening the main window from the system tray no longer emits a QML focus error.
+- Windows side-button handling is more robust during mapping changes, reconnects, queue pressure, and shutdown.
+- Locale-aware font fallback and translated labels are more consistent across the interface.
 
-## Documentation
+## Hardware validation
 
-- Improved the GitHub repository homepage.
-- Added dedicated English and Simplified Chinese screenshot sets.
-- Updated screenshot guidance and Windows packaging references for the bilingual assets.
+- Verified with a real Logitech MX Master 3 connected over Bluetooth.
+- Logitech receiver transport has not yet been validated.
+- Logitech Options and Options+ coexistence has not yet been validated.
 
 ## Compatibility
 
 - Windows remains the only official public release target.
-- Existing profiles, mappings, configuration storage, input timing, supported devices, and updater behavior remain compatible with v1.3.0.
+- Existing profiles, mappings, configuration storage, input timing, supported devices, and updater behavior remain compatible.
 - Generic Mouse Mode continues to support Middle Button, Side Button 1 (Back), and Side Button 2 (Forward).
 
 ## Checksums
 
-The official Windows ZIP SHA-256 is provided in `PourInput-v1.3.1-Windows.zip.sha256` and in `pourinput-v1.3.1-update.json`.
+The official Windows ZIP SHA-256 is provided in `PourInput-v1.3.2-Windows.zip.sha256` and in `pourinput-v1.3.2-update.json`.
