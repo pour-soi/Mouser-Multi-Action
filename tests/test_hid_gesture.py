@@ -788,6 +788,33 @@ class HidBoltReceiverTests(unittest.TestCase):
 
 
 class HidReconnectInvariantTests(unittest.TestCase):
+    def test_expanded_desired_diverts_request_only_one_reconnect(self):
+        listener = hid_gesture.HidGestureListener(
+            extra_diverts={0x00C4: {"on_down": Mock(), "on_up": Mock()}},
+        )
+        listener._connected = True
+        listener._applied_extra_divert_cids = {0x00C4}
+        expanded = {
+            0x00C4: {"on_down": Mock(), "on_up": Mock()},
+            0x0053: {"on_down": Mock(), "on_up": Mock()},
+            0x0056: {"on_down": Mock(), "on_up": Mock()},
+        }
+
+        with patch.object(listener, "force_reconnect") as force_reconnect:
+            self.assertTrue(listener.update_extra_diverts(expanded))
+            self.assertTrue(listener.preserve_device_identity_on_reconnect)
+            force_reconnect.assert_called_once_with()
+
+            listener._connected = False
+            listener._applied_extra_divert_cids = set()
+            self.assertFalse(listener.update_extra_diverts(expanded))
+            force_reconnect.assert_called_once_with()
+
+            listener._applied_extra_divert_cids = set(expanded)
+            listener._connected = True
+            self.assertFalse(listener.update_extra_diverts(expanded))
+            force_reconnect.assert_called_once_with()
+
     def test_update_extra_diverts_reconnects_when_mode_shift_is_added_live(self):
         listener = hid_gesture.HidGestureListener()
         listener._connected = True

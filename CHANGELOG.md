@@ -6,6 +6,21 @@ This project uses Semantic Versioning.
 
 ## Unreleased
 
+## v1.3.3 - 2026-07-19
+
+### Fixed
+
+- Fixed MX Master 3 Back and Forward shortcut changes not taking effect.
+- Added dedicated Logitech HID++ routes for Back CID `0x0053` and Forward CID `0x0056`.
+- Fixed a reconnect loop caused by adding and removing side-button HID++ diverts during connection refresh.
+- Kept MX Master 3 device-specific mappings separate from Generic Mouse Mode.
+- Side-button mappings now apply immediately, remain profile-specific, and persist after restart.
+
+### Validation
+
+- Verified with a real Logitech MX Master 3 connected over Bluetooth.
+- Confirmed stable HID++ diversion and independent Back and Forward action execution with Generic Mouse Mode disabled.
+
 ## v1.3.2 - 2026-07-17
 
 ### Fixed

@@ -633,6 +633,8 @@ HIDPP_ERROR_NAMES = {
 }
 
 KNOWN_CID_NAMES = {
+    0x0053: "Back Button",
+    0x0056: "Forward Button",
     0x00C3: "Mouse Gesture Button",
     0x00C4: "Smart Shift",
     0x00D7: "Virtual Gesture Button",
@@ -722,6 +724,8 @@ class HidGestureListener:
         }
         self._extra_diverts_lock = threading.RLock()
         self._stale_extra_divert_cids = set()
+        self._applied_extra_divert_cids = set()
+        self._preserve_device_identity_on_reconnect = False
         self._dev       = None          # hid.device()
         self._thread    = None
         self._running   = False
@@ -795,6 +799,10 @@ class HidGestureListener:
     def connected_device(self):
         return self._connected_device_info
 
+    @property
+    def preserve_device_identity_on_reconnect(self):
+        return self._preserve_device_identity_on_reconnect
+
     def update_extra_diverts(self, extra_diverts=None):
         """Update extra diverted CIDs while the listener is running.
 
@@ -814,7 +822,8 @@ class HidGestureListener:
                 for cid, info in next_extra.items():
                     info["held"] = old_extra[cid].get("held", False)
                 self._extra_diverts = next_extra
-                return False
+                if not self._connected or next_keys == self._applied_extra_divert_cids:
+                    return False
 
             removed = old_keys - next_keys
             for cid in removed:
@@ -837,8 +846,9 @@ class HidGestureListener:
                 if next_keys else "none"
             )
         )
-        if self._connected:
+        if self._connected and next_keys != self._applied_extra_divert_cids:
             print("[HidGesture] Extra diverts changed while connected; reconnecting to re-apply HID++ diversion")
+            self._preserve_device_identity_on_reconnect = True
             self.force_reconnect()
         return True
 
@@ -1304,6 +1314,8 @@ class HidGestureListener:
             ok = resp is not None
             print(f"[HidGesture] Extra divert {_format_cid(cid)}: "
                   f"{'OK' if ok else 'FAILED'}")
+        with self._extra_diverts_lock:
+            self._applied_extra_divert_cids = {cid for cid, _ in items}
 
     def _undivert(self):
         """Restore default button behaviour (best-effort)."""
@@ -1964,6 +1976,13 @@ class HidGestureListener:
         retry_logged = False
         while self._running:
             if not self._try_connect():
+                if self._preserve_device_identity_on_reconnect:
+                    self._preserve_device_identity_on_reconnect = False
+                    if self._on_disconnect:
+                        try:
+                            self._on_disconnect()
+                        except Exception:
+                            pass
                 if not retry_logged:
                     print("[HidGesture] No compatible device; retrying in 5 s…")
                     retry_logged = True
@@ -1975,6 +1994,7 @@ class HidGestureListener:
             retry_logged = False
 
             self._connected = True
+            self._preserve_device_identity_on_reconnect = False
             if self._on_connect:
                 try:
                     self._on_connect()
@@ -2065,6 +2085,7 @@ class HidGestureListener:
             self._rawxy_enabled = False
             self._connected_device_info = None
             self._reconnect_requested = False
+            self._applied_extra_divert_cids = set()
             if self._connected:
                 self._connected = False
                 if self._on_disconnect:

@@ -1183,10 +1183,34 @@ class Backend(QObject):
     @Slot(str, str, str)
     def setProfileMapping(self, profileName, button, actionId):
         """Set a button mapping in a specific profile."""
+        previous = (
+            self._cfg.get("profiles", {})
+            .get(profileName, {})
+            .get("mappings", {})
+            .get(button, "none")
+        )
+        active_profile = self._cfg.get("active_profile", "default")
+        if self._debug_events_enabled:
+            self._append_debug_line(
+                "Shortcut editor "
+                f"control={button} saved_key={button} action={actionId} "
+                f"profile={profileName} active_profile={active_profile} "
+                f"previous={previous}"
+            )
         self._cfg = set_mapping(self._cfg, button, actionId,
                                 profile=profileName)
+        generation = None
         if self._engine:
-            self._engine.reload_mappings()
+            snapshot = self._engine.reload_mappings()
+            generation = getattr(snapshot, "generation", None)
+        if self._debug_events_enabled:
+            updated = self._cfg["profiles"][profileName]["mappings"][button]
+            self._append_debug_line(
+                "Shortcut saved "
+                f"key={button} previous={previous} updated={updated} "
+                f"active_profile={active_profile} save=true "
+                f"generation={generation if generation is not None else 'unavailable'}"
+            )
         self.profilesChanged.emit()
         self.mappingsChanged.emit()
         self._status("status.saved", "Saved")

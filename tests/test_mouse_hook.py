@@ -80,6 +80,31 @@ class _FakeLinuxUInput:
 
 
 class BaseMouseHookRuntimeStateTests(unittest.TestCase):
+    def test_intentional_reconnect_retains_then_expires_device_identity(self):
+        hook = BaseMouseHook()
+        device = SimpleNamespace(key="mx_master_3")
+        listener = SimpleNamespace(
+            connected_device=device,
+            preserve_device_identity_on_reconnect=False,
+        )
+        hook._hid_gesture = listener
+        connection_changes = []
+        hook.set_connection_change_callback(connection_changes.append)
+        hook._on_hid_connect()
+
+        listener.connected_device = None
+        listener.preserve_device_identity_on_reconnect = True
+        hook._on_hid_disconnect()
+
+        self.assertFalse(hook.device_connected)
+        self.assertIs(hook.connected_device, device)
+
+        listener.preserve_device_identity_on_reconnect = False
+        hook._on_hid_disconnect()
+
+        self.assertIsNone(hook.connected_device)
+        self.assertEqual(connection_changes, [True, False, False])
+
     def test_default_runtime_state_is_disconnected(self):
         hook = BaseMouseHook()
 
@@ -118,6 +143,35 @@ class BaseMouseHookRuntimeStateTests(unittest.TestCase):
         listener.update_extra_diverts.assert_called_once()
         extra = listener.update_extra_diverts.call_args.args[0]
         self.assertIn(0x00C4, extra)
+
+    def test_sync_hid_extra_diverts_routes_mx_master_side_buttons(self):
+        hook = BaseMouseHook()
+        listener = SimpleNamespace(update_extra_diverts=Mock(return_value=True))
+        hook._hid_gesture = listener
+        hook.divert_logi_xbutton1 = True
+        hook.divert_logi_xbutton2 = True
+        hook._connected_device = SimpleNamespace(key="mx_master_3")
+        hook.debug_mode = True
+        debug_messages = []
+        hook.set_debug_callback(debug_messages.append)
+
+        self.assertTrue(hook.sync_hid_extra_diverts())
+
+        extra = listener.update_extra_diverts.call_args.args[0]
+        self.assertEqual(set(extra), {0x0053, 0x0056})
+        seen = []
+        hook.register(
+            MouseEvent.LOGI_XBUTTON1_DOWN,
+            lambda event: seen.append(event.event_type),
+        )
+        extra[0x0053]["on_down"]()
+        self.assertEqual(seen, [MouseEvent.LOGI_XBUTTON1_DOWN])
+        self.assertTrue(any(
+            "device=mx_master_3" in message
+            and "cid=0x0053" in message
+            and "detected=xbutton1" in message
+            for message in debug_messages
+        ))
 
 
 

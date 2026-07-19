@@ -32,6 +32,11 @@ from core.logi_devices import clamp_dpi, get_reprogrammable_buttons
 HSCROLL_ACTION_COOLDOWN_S = 0.35
 HSCROLL_VOLUME_COOLDOWN_S = 0.06
 _VOLUME_ACTIONS = {"volume_up", "volume_down"}
+_LOGI_XBUTTON_CIDS = {"xbutton1": 0x0053, "xbutton2": 0x0056}
+_LOGI_XBUTTON_EVENTS = {
+    "xbutton1": (MouseEvent.LOGI_XBUTTON1_DOWN, MouseEvent.LOGI_XBUTTON1_UP),
+    "xbutton2": (MouseEvent.LOGI_XBUTTON2_DOWN, MouseEvent.LOGI_XBUTTON2_UP),
+}
 class Engine:
     """
     Core logic: reads config, installs the mouse hook,
@@ -143,6 +148,20 @@ class Engine:
         # connected yet, assume the button exists (safe: if the device
         # turns out not to have it, the divert simply has no effect).
         device_buttons = get_reprogrammable_buttons(device)
+        inventory = getattr(device, "capability_inventory", None)
+        control_cids = set(getattr(inventory, "control_cids", ()) or ())
+        has_runtime_controls = bool(
+            getattr(inventory, "has_reprog_controls", False)
+        )
+        logi_xbutton_routes = {}
+        if (
+            sys.platform == "win32"
+            and not generic_mouse_enabled
+            and has_runtime_controls
+        ):
+            for button, cid in _LOGI_XBUTTON_CIDS.items():
+                if button in (device_buttons or ()) and cid in control_cids:
+                    logi_xbutton_routes[button] = button
         xbutton_routes = {
             button: resolve_windows_xbutton_mapping_key(
                 button,
@@ -193,6 +212,27 @@ class Engine:
                 for pdata in self.cfg.get("profiles", {}).values()
             )
         )
+        for button in WINDOWS_XBUTTON_KEYS:
+            should_divert = (
+                logi_xbutton_routes.get(button) == button
+                and any(
+                    pdata.get("mappings", {}).get(button, "none") != "none"
+                    or pdata.get("mappings", {}).get(
+                        long_press_mapping_key(button), "none"
+                    ) != "none"
+                    for pdata in self.cfg.get("profiles", {}).values()
+                )
+            )
+            setattr(self.hook, f"divert_logi_{button}", should_divert)
+            if should_divert and self._debug_events_enabled:
+                cid = _LOGI_XBUTTON_CIDS[button]
+                device_key = getattr(device, "key", "") or "unresolved"
+                self._emit_debug(
+                    "Logitech binding route "
+                    f"device={device_key} cid=0x{cid:04X} detected={button} "
+                    f"profile={self._current_profile} logical={button} "
+                    f"action={mappings.get(button, 'none')}"
+                )
         if hasattr(self.hook, "sync_hid_extra_diverts"):
             self.hook.sync_hid_extra_diverts()
 
@@ -206,7 +246,10 @@ class Engine:
                 if xbutton_routes.get(physical_key) != btn_key:
                     continue
             elif btn_key in WINDOWS_XBUTTON_KEYS:
-                if xbutton_routes.get(btn_key) != btn_key:
+                if (
+                    xbutton_routes.get(btn_key) != btn_key
+                    and logi_xbutton_routes.get(btn_key) != btn_key
+                ):
                     continue
             elif not self._should_bind_middle_button(
                 btn_key,
@@ -217,6 +260,8 @@ class Engine:
             if btn_key.startswith("gesture") and not device_supports_gesture:
                 continue
             events = list(BUTTON_TO_EVENTS.get(btn_key, ()))
+            if logi_xbutton_routes.get(btn_key) == btn_key:
+                events = list(_LOGI_XBUTTON_EVENTS[btn_key])
             for event_type in events:
                 bindings.set_route(event_type, btn_key)
             long_action_id = mappings.get(long_press_mapping_key(btn_key), "none")
@@ -332,7 +377,8 @@ class Engine:
             try:
                 if self._enabled:
                     self._emit_debug(
-                        f"Mapped {event.event_type} -> {action_id} "
+                        f"Mapped logical={getattr(event, 'binding_route', None) or 'unknown'} "
+                        f"event={event.event_type} action={action_id} "
                         f"({self._action_label(action_id)})"
                     )
                     if event.event_type.startswith("gesture_"):
@@ -435,7 +481,8 @@ class Engine:
             try:
                 if self._enabled:
                     self._emit_debug(
-                        f"Mapped {event.event_type} -> {action_id} (mouse down)"
+                        f"Mapped logical={getattr(event, 'binding_route', None) or 'unknown'} "
+                        f"event={event.event_type} action={action_id} (mouse down)"
                     )
                     inject_mouse_down(action_id)
                     # Safety: auto-release after 20s if UP event is never received
@@ -456,7 +503,8 @@ class Engine:
             try:
                 if self._enabled:
                     self._emit_debug(
-                        f"Mapped {event.event_type} -> {action_id} (mouse up)"
+                        f"Mapped logical={getattr(event, 'binding_route', None) or 'unknown'} "
+                        f"event={event.event_type} action={action_id} (mouse up)"
                     )
                     # Cancel safety timer
                     old = self._mouse_release_timers.pop(action_id, None)
@@ -1098,8 +1146,9 @@ class Engine:
         with self._lock:
             self.cfg = load_config()
             self._current_profile = self.cfg.get("active_profile", "default")
-            self._replace_bindings("mapping-reload")
+            snapshot = self._replace_bindings("mapping-reload")
             self._emit_debug(f"reload_mappings profile={self._current_profile}")
+            return snapshot
 
     def set_enabled(self, enabled):
         enabled = bool(enabled)

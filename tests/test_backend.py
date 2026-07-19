@@ -1164,6 +1164,129 @@ class BackendDeviceLayoutTests(unittest.TestCase):
         self.assertIn("generic_xbutton1_long", mappings)
         self.assertEqual(engine.reload_count, 2)
 
+    def test_mx_master_side_button_edits_persist_reload_and_stay_device_specific(self):
+        from core.engine import Engine
+
+        persisted = copy.deepcopy(DEFAULT_CONFIG)
+        persisted["settings"]["generic_mouse_enabled"] = False
+        persisted["settings"]["debug_mode"] = True
+        persisted["profiles"]["work"] = copy.deepcopy(
+            persisted["profiles"]["default"]
+        )
+        persisted["profiles"]["work"]["label"] = "Work"
+        persisted["profiles"]["work"]["mappings"]["xbutton1"] = "cut"
+        device = SimpleNamespace(
+            key="mx_master_3",
+            name="MX Master 3",
+            transport="bluetooth",
+            supported_buttons=("middle", "xbutton1", "xbutton2"),
+            capabilities=SimpleNamespace(
+                reprogrammable_buttons=("middle", "xbutton1", "xbutton2"),
+            ),
+            capability_inventory=SimpleNamespace(
+                has_reprog_controls=True,
+                control_cids=(0x0052, 0x0053, 0x0056),
+            ),
+        )
+
+        def load_persisted():
+            return copy.deepcopy(persisted)
+
+        def save_persisted(updated):
+            nonlocal persisted
+            persisted = copy.deepcopy(updated)
+
+        with (
+            patch("ui.backend.load_config", side_effect=load_persisted),
+            patch("ui.backend.save_config", side_effect=save_persisted),
+            patch("ui.backend.supports_login_startup", return_value=False),
+            patch("ui.backend.sys.platform", "win32"),
+            patch("core.config.save_config", side_effect=save_persisted),
+            patch("core.engine.load_config", side_effect=load_persisted),
+            patch("core.engine.MouseHook", _DisconnectedInspectableMouseHook),
+            patch("core.engine.AppDetector", _FakeAppDetector),
+            patch("core.engine.sys.platform", "win32"),
+        ):
+            engine = Engine()
+            engine.hook.connected_device = device
+            engine.hook.device_connected = True
+            engine.reload_mappings()
+            backend = Backend(engine=engine)
+            initial_generation = engine.hook.capture_binding_snapshot().generation
+
+            backend.setProfileMapping("default", "xbutton1", "copy")
+            backend.setProfileMapping("default", "xbutton2", "paste")
+
+            mappings = persisted["profiles"]["default"]["mappings"]
+            self.assertEqual(mappings["xbutton1"], "copy")
+            self.assertEqual(mappings["xbutton2"], "paste")
+            self.assertEqual(mappings["generic_xbutton1"], "none")
+            self.assertFalse(persisted["settings"]["generic_mouse_enabled"])
+            self.assertGreater(
+                engine.hook.capture_binding_snapshot().generation,
+                initial_generation,
+            )
+            ui_mappings = {
+                item["key"]: item["actionId"]
+                for item in backend.getProfileMappings("default")
+            }
+            self.assertEqual(ui_mappings["xbutton1"], "copy")
+            self.assertEqual(ui_mappings["xbutton2"], "paste")
+            self.assertIn(
+                "control=xbutton1 saved_key=xbutton1 action=copy",
+                backend.debugLog,
+            )
+            self.assertIn("active_profile=default", backend.debugLog)
+            self.assertIn("generation=", backend.debugLog)
+
+            with patch("core.engine.execute_action") as execute_action_mock:
+                debug_messages = []
+                engine._debug_cb = debug_messages.append
+                snapshot = engine.hook.capture_binding_snapshot()
+                for event_type in (
+                    MouseEvent.LOGI_XBUTTON1_DOWN,
+                    MouseEvent.LOGI_XBUTTON2_DOWN,
+                ):
+                    route = snapshot.routes[event_type]
+                    snapshot.callbacks[event_type][0](SimpleNamespace(
+                        event_type=event_type,
+                        binding_route=route,
+                    ))
+            self.assertEqual(
+                [item.args for item in execute_action_mock.call_args_list],
+                [("copy",), ("paste",)],
+            )
+            self.assertTrue(any(
+                "logical=xbutton1" in message and "action=copy" in message
+                for message in debug_messages
+            ))
+
+            restarted = Engine()
+            restarted.hook.connected_device = device
+            restarted.hook.device_connected = True
+            restarted.reload_mappings()
+            self.assertEqual(
+                restarted.cfg["profiles"]["default"]["mappings"]["xbutton1"],
+                "copy",
+            )
+            restarted._switch_profile("work")
+            with patch("core.engine.execute_action") as execute_action_mock:
+                snapshot = restarted.hook.capture_binding_snapshot()
+                snapshot.callbacks[MouseEvent.LOGI_XBUTTON1_DOWN][0](
+                    SimpleNamespace(
+                        event_type=MouseEvent.LOGI_XBUTTON1_DOWN,
+                        binding_route="xbutton1",
+                    )
+                )
+            execute_action_mock.assert_called_once_with("cut")
+            restarted._switch_profile("default")
+            self.assertEqual(
+                restarted.hook.capture_binding_snapshot().routes[
+                    MouseEvent.LOGI_XBUTTON1_DOWN
+                ],
+                "xbutton1",
+            )
+
     def test_generic_mouse_toggle_clears_live_xbutton_hook_state(self):
         from core.engine import Engine
 

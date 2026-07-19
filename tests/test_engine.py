@@ -397,7 +397,7 @@ class EngineHorizontalScrollTests(unittest.TestCase):
         self.assertEqual(len(engine.hook.callbacks[MouseEvent.XBUTTON1_DOWN]), 1)
         self.assertEqual(len(engine.hook.callbacks[MouseEvent.XBUTTON1_UP]), 1)
 
-    def test_recognized_logitech_device_does_not_authorize_physical_xbuttons(self):
+    def test_recognized_logitech_device_routes_diverted_side_button_cids(self):
         engine = self._make_engine()
         mappings = engine.cfg["profiles"]["default"]["mappings"]
         mappings["xbutton1"] = "browser_back"
@@ -411,7 +411,10 @@ class EngineHorizontalScrollTests(unittest.TestCase):
             capabilities=SimpleNamespace(
                 reprogrammable_buttons=("middle", "xbutton1", "xbutton2"),
             ),
-            capability_inventory=SimpleNamespace(has_reprog_controls=True),
+            capability_inventory=SimpleNamespace(
+                has_reprog_controls=True,
+                control_cids=(0x0052, 0x0053, 0x0056),
+            ),
         )
 
         with (
@@ -420,6 +423,16 @@ class EngineHorizontalScrollTests(unittest.TestCase):
         ):
             engine.reload_mappings()
 
+        self.assertIn(MouseEvent.LOGI_XBUTTON1_DOWN, engine.hook.callbacks)
+        self.assertIn(MouseEvent.LOGI_XBUTTON2_DOWN, engine.hook.callbacks)
+        self.assertEqual(
+            engine.hook.capture_binding_snapshot().routes[
+                MouseEvent.LOGI_XBUTTON1_DOWN
+            ],
+            "xbutton1",
+        )
+        self.assertTrue(engine.hook.divert_logi_xbutton1)
+        self.assertTrue(engine.hook.divert_logi_xbutton2)
         self.assertNotIn(MouseEvent.XBUTTON1_DOWN, engine.hook.callbacks)
         self.assertNotIn(MouseEvent.XBUTTON2_DOWN, engine.hook.callbacks)
         self.assertNotIn(MouseEvent.XBUTTON1_DOWN, engine.hook.blocked_events)
@@ -449,6 +462,8 @@ class EngineHorizontalScrollTests(unittest.TestCase):
             engine.reload_mappings()
 
         self.assertEqual(len(engine.hook.callbacks[MouseEvent.XBUTTON1_DOWN]), 1)
+        self.assertFalse(engine.hook.divert_logi_xbutton1)
+        self.assertFalse(engine.hook.divert_logi_xbutton2)
         with patch("core.engine.execute_action") as execute_action_mock:
             engine.hook.callbacks[MouseEvent.XBUTTON1_DOWN][0](
                 SimpleNamespace(event_type=MouseEvent.XBUTTON1_DOWN)

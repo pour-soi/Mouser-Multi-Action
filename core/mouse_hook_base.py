@@ -39,6 +39,8 @@ class BaseMouseHook:
         self._connection_change_cb = None
         self.divert_mode_shift = False
         self.divert_dpi_switch = False
+        self.divert_logi_xbutton1 = False
+        self.divert_logi_xbutton2 = False
         self._gesture_direction_enabled = False
         self._gesture_threshold = 50.0
         self._gesture_deadzone = 40.0
@@ -393,6 +395,16 @@ class BaseMouseHook:
                 "on_down": self._on_hid_dpi_switch_down,
                 "on_up": self._on_hid_dpi_switch_up,
             }
+        if self.divert_logi_xbutton1:
+            extra[0x0053] = {
+                "on_down": self._on_hid_xbutton1_down,
+                "on_up": self._on_hid_xbutton1_up,
+            }
+        if self.divert_logi_xbutton2:
+            extra[0x0056] = {
+                "on_down": self._on_hid_xbutton2_down,
+                "on_up": self._on_hid_xbutton2_up,
+            }
         return extra
 
     def sync_hid_extra_diverts(self):
@@ -432,8 +444,19 @@ class BaseMouseHook:
         self._set_device_connected(True)
 
     def _on_hid_disconnect(self):
-        self._connected_device = None
+        listener = self._hid_gesture
+        preserve_identity = bool(
+            getattr(listener, "preserve_device_identity_on_reconnect", False)
+        )
+        was_connected = self._device_connected
+        if not preserve_identity:
+            self._connected_device = None
         self._set_device_connected(False)
+        if not preserve_identity and not was_connected and self._connection_change_cb:
+            try:
+                self._connection_change_cb(False)
+            except Exception:
+                pass
 
     def _on_hid_gesture_down(self):
         self._dispatch(MouseEvent(MouseEvent.GESTURE_DOWN))
@@ -455,3 +478,40 @@ class BaseMouseHook:
 
     def _on_hid_dpi_switch_up(self):
         self._dispatch(MouseEvent(MouseEvent.DPI_SWITCH_UP))
+
+    def _dispatch_hid_xbutton(self, event_type, cid, logical_control):
+        device = self.connected_device
+        identity = getattr(device, "key", "") or "unknown"
+        name = (
+            getattr(device, "display_name", "")
+            or getattr(device, "name", "")
+            or "unknown"
+        )
+        transport = getattr(device, "transport", "") or "unknown"
+        self._emit_debug(
+            "Logitech HID control "
+            f"device={identity} name={name} transport={transport} "
+            f"cid=0x{cid:04X} detected={logical_control} "
+            f"event={event_type}"
+        )
+        self._dispatch(MouseEvent(event_type))
+
+    def _on_hid_xbutton1_down(self):
+        self._dispatch_hid_xbutton(
+            MouseEvent.LOGI_XBUTTON1_DOWN, 0x0053, "xbutton1"
+        )
+
+    def _on_hid_xbutton1_up(self):
+        self._dispatch_hid_xbutton(
+            MouseEvent.LOGI_XBUTTON1_UP, 0x0053, "xbutton1"
+        )
+
+    def _on_hid_xbutton2_down(self):
+        self._dispatch_hid_xbutton(
+            MouseEvent.LOGI_XBUTTON2_DOWN, 0x0056, "xbutton2"
+        )
+
+    def _on_hid_xbutton2_up(self):
+        self._dispatch_hid_xbutton(
+            MouseEvent.LOGI_XBUTTON2_UP, 0x0056, "xbutton2"
+        )
